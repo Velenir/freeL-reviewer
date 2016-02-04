@@ -1,0 +1,50 @@
+extends layout
+
+block content
+  .jumbotron
+    .container
+      h1 Hello, world!
+      p A site where non-paying students of Coursera can post their assignments and review assignments of others.
+      p
+        a.btn.btn-primary.btn-lg(href='#', role='button') Learn more
+
+  h1= title
+  p Welcome to #{title}
+  
+  .container
+    .row
+      .col-sm-12.col-xs-12
+        ul.list-group
+          li.list-group-item
+            h2.list-group-item-heading Multiplatform Mobile App Development with Web Technologies
+            
+            p.list-group-item-text.table-hover
+              a(href="#") Week 1
+            
+            a(href="#") Week1
+            
+            p
+              .btn-group.btn-group-lg(role='group')
+                button.btn.btn-default(type='button') Week 1   
+                button.btn.btn-default(type='button') Middle  
+                button.btn.btn-default(type='button') Right
+
+            table.table.table-striped.large
+              tbody
+                td Week 1
+                td: a(href="/week1/post") Post
+                  | 
+                  span.badge 0
+                td: a(href="week1/review") Review
+                  | 
+                  span.badge 0
+                td: a(href="week1/overview") Overview
+                
+                  
+    .row
+      .col-sm-9.col-sm-offset-1.col-xs-12
+        
+      
+  footer
+    .container
+      h3.text-primary Place sticky footer content here.
