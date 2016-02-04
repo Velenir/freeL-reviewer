@@ -1,3 +1,9 @@
+/*eliminate space between navbar and main content (e.g. jumbotron)*/
+body > .navbar {
+  margin-bottom: 0;
+}
+
+
 body {
   /*padding: 50px;*/
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;

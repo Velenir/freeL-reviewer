@@ -1,6 +1,6 @@
-extends layout
+extends page
 
-block content
+block main
   .container
     .row
       .page-header
@@ -19,6 +19,7 @@ block content
             block form              
             
           .panel-footer.clearfix
-            .btn-group.btn-group-lg.pull-right(role='group')
-              button.btn.btn-primary(type='submit', form="submissionForm") Submit
-              button.btn.btn-warning(type='reset', form="submissionForm") Reset            
+            block footer
+              .btn-group.btn-group-lg.pull-right(role='group')
+                button.btn.btn-primary(type='submit', form="submissionForm") Submit
+                button.btn.btn-warning(type='reset', form="submissionForm") Reset            
