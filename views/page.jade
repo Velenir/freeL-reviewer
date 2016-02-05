@@ -14,10 +14,12 @@ block content
             span.icon-bar
           a.navbar-brand(href='/') FreeL
         //- Collect the nav links, forms, and other content for toggling
-        #bs-navbar-collapse-1.collapse.navbar-collapse
-          - var greeting = user ? "Signed in as #{user.username}" : "Welcome, traveler"
-          
-          p.navbar-text= greeting
+        #bs-navbar-collapse-1.collapse.navbar-collapse          
+          p.navbar-text
+            if user
+              | Signed in as #{user.username}
+            else
+              | Welcome, traveler
                        
           ul.nav.navbar-nav.navbar-right
             if user

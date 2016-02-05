@@ -21,6 +21,12 @@ footer {
   background-color: #eee;
 }
 
+/*otherwise textarea can be resized outside .panel along x-axis*/
 .panel form textarea {
   resize: vertical;
+}
+
+/*otherwise gets overridden easily*/
+form .alert {
+  text-align: initial;
 }
