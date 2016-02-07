@@ -17,6 +17,8 @@ function requireAuthorization(req, res, next) {
   console.log("REDIRECTING");
   // remember from where was redirected
   req.session.redirectedFrom = req.url;
+  console.log("ORIGINAL URL", req.originalUrl);
+  console.log("URL", req.url);
   res.redirect('/login_register');
 
   // res.render('login_register', {ops :{redirectedFrom: req.baseUrl + req.originalUrl, requrl: req.url, originalUrl: req.originalUrl, baseUrl: req.baseUrl, reqPath: req.path}, info: "Some Info"});
@@ -24,6 +26,7 @@ function requireAuthorization(req, res, next) {
 
 // if already logged in don't go to /register or /login
 function alreadyLoggedIn(req, res, next) {
+  console.log("In ALREADy loggedIn");
   if(req.user){
     return res.redirect('/');
   }
@@ -103,15 +106,15 @@ router.get('/logout', function(req, res) {
 
 router.get('/login_register', function(req, res){
 
-  console.log(req.session);
+  // console.log(req.session);
   res.render('login_register', {redirectedFrom: req.session.redirectedFrom, loginInfo: "Some important info", registerInfo: "Equally important info"});
 
   delete req.session.redirectedFrom;
-  console.log(req.session);
+  // console.log(req.session);
 });
 
 
-// TODO should be moved to the start of '/week.*' route
+// TODO should be moved to the start of '/week*' route
 // routes other than above only accessible to logged-in users
 router.all('/*', requireAuthorization);
 

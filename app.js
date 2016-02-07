@@ -51,6 +51,14 @@ passport.deserializeUser(Account.deserializeUser());
 
 // mongoose establish connection to db
 mongoose.connect('mongodb://localhost/passport_local_mongoose_express4');
+mongoose.connection.once('open', function(){
+  console.log('Opened Connection');
+  Account.find({}, function(err, users){
+    console.log(users);
+  });
+});
+
+require('./models/courses');
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
