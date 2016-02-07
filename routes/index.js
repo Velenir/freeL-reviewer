@@ -6,23 +6,23 @@ var Account = require('../models/account');
 
 var router = express.Router();
 
-// if not logged in go to '/login_register'
-function requireAuthorization(req, res, next) {
-  console.log("IN requireAuthorization");
-  if(req.user){
-    return next();
-    console.log("GOING NEXT");
-  }
-
-  console.log("REDIRECTING");
-  // remember from where was redirected
-  req.session.redirectedFrom = req.url;
-  console.log("ORIGINAL URL", req.originalUrl);
-  console.log("URL", req.url);
-  res.redirect('/login_register');
-
-  // res.render('login_register', {ops :{redirectedFrom: req.baseUrl + req.originalUrl, requrl: req.url, originalUrl: req.originalUrl, baseUrl: req.baseUrl, reqPath: req.path}, info: "Some Info"});
-}
+// // if not logged in go to '/login_register'
+// function requireAuthorization(req, res, next) {
+//   console.log("IN requireAuthorization");
+//   if(req.user){
+//     return next();
+//     console.log("GOING NEXT");
+//   }
+//
+//   console.log("REDIRECTING");
+//   // remember from where was redirected
+//   req.session.redirectedFrom = req.url;
+//   console.log("ORIGINAL URL", req.originalUrl);
+//   console.log("URL", req.url);
+//   res.redirect('/login_register');
+//
+//   // res.render('login_register', {ops :{redirectedFrom: req.baseUrl + req.originalUrl, requrl: req.url, originalUrl: req.originalUrl, baseUrl: req.baseUrl, reqPath: req.path}, info: "Some Info"});
+// }
 
 // if already logged in don't go to /register or /login
 function alreadyLoggedIn(req, res, next) {
@@ -84,7 +84,7 @@ router.post('/login', function(req, res, next) {
     //  if authentication failed
     if (!user) {
       console.log("User null; " + info);
-      return res.render(req.body.goto ? "login_register" : 'login', {loginInfo: info});
+      return res.render(req.body.redirectedFrom ? "login_register" : 'login', {loginInfo: info});
     }
     //  if authentication succeeded establish a user session
     req.logIn(user, function(err) {
@@ -116,17 +116,17 @@ router.get('/login_register', function(req, res){
 
 // TODO should be moved to the start of '/week*' route
 // routes other than above only accessible to logged-in users
-router.all('/*', requireAuthorization);
+// router.all('/*', requireAuthorization);
 
 // GET post assignment page
-router.get('/week:id/post', function(req, res, next) {
-  res.render('post', { title: 'Submit your assignment', week: req.params.id });
-});
-
-// GET edit assignment page
-router.get('/week:id/edit', function(req, res, next) {
-  res.render('post', { title: 'Edit your assignment', week: req.params.id, toEdit: true });
-});
+// router.get('/week:id/post', function(req, res, next) {
+//   res.render('post', { title: 'Submit your assignment', week: req.params.id });
+// });
+//
+// // GET edit assignment page
+// router.get('/week:id/edit', function(req, res, next) {
+//   res.render('post', { title: 'Edit your assignment', week: req.params.id, toEdit: true });
+// });
 
 // -- TODO
 

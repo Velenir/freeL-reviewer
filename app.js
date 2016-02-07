@@ -12,6 +12,7 @@ var LocalStrategy = require('passport-local').Strategy;
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
+var course = require('./routes/course');
 
 var app = express();
 
@@ -41,6 +42,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
 app.use('/users', users);
+app.use('/course', course);
 
 // passport config
 var Account = require('./models/account');
@@ -58,7 +60,7 @@ mongoose.connection.once('open', function(){
   });
 });
 
-require('./models/courses');
+// require('./models/courses');
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
