@@ -21,6 +21,20 @@ var Course = new Schema({
 // , {timestamps: true}
 );
 
+Course.statics.getCoursesWithWeeks = function (arg1, arg2) {
+    if(arg2)    //arg2 is Function, arg1 is fields filter
+        return this.find({}).populate('weeks', arg1).exec(arg2);
+    else    //arg1 is Function
+        return this.find({}).populate('weeks').exec(arg1);
+};
+
+Course.statics.getCourseWithWeeks = function (courseId, arg1, arg2) {
+    if(arg2)    //arg2 is Function, arg1 is fields filter
+        return this.findById(courseId).populate('weeks', arg1).exec(arg2);
+    else    //arg1 is Function
+        return this.findById(courseId).populate('weeks').exec(arg1);
+}
+
 var CourseModel = mongoose.model('Course', Course);
 
 // try to insert some courses

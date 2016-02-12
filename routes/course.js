@@ -39,12 +39,12 @@ router.get('/:id/week:n', function(req, res, next) {
 
 // GET post assignment page
 router.get('/:id/week:n/post', function(req, res, next) {
-  res.render('post', { title: 'Submit your assignment', week: req.params.n });
+  res.render('post', { title: 'Submit your assignment',course: req.params.id, week: req.params.n, user: req.user });
 });
 
 // GET edit assignment page
 router.get('/:id/week:n/edit', function(req, res, next) {
-  res.render('post', { title: 'Edit your assignment', week: req.params.n, toEdit: true });
+  res.render('post', { title: 'Edit your assignment', week: req.params.n, toEdit: true, user: req.user });
 });
 
 

@@ -3,6 +3,8 @@ var express = require('express');
 //require passport
 var passport = require('passport');
 var Account = require('../models/account');
+var Week = require('../models/week');
+var Course = require('../models/course');
 
 var router = express.Router();
 
@@ -36,7 +38,19 @@ function alreadyLoggedIn(req, res, next) {
 
 /* GET home page. */
 router.get('/', function (req, res) {
-    res.render('index', { user : req.user });
+    // Course.find({}).populate('weeks').exec
+
+    Course.getCoursesWithWeeks('-_id -tasks', function(err, courses){
+      if(err) {
+        console.log("Population Error:", err);
+        res.render('index', { user : req.user });
+      }
+      console.log("courses found:", courses);
+      if(courses.length > 0)
+        console.log("weeks in 1st course:", courses[0].weeks);
+      res.render('index', { user : req.user, courses: courses });
+    });
+    // res.render('index', { user : req.user });
 });
 
 // when accessing /register or /login when already logged in rediret to '/'
