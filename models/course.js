@@ -1,6 +1,8 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
+
+
 var coursesTotal;
 // on open connection get number of elements in the courses collection
 mongoose.connection.once('open', function(){
@@ -16,7 +18,7 @@ var Course = new Schema({
     // assign id the number of the course in order of creation
     _id: {type: Number, default: function(){ return coursesTotal++;}},
     name: {type: String, required: true},
-    weeks: [{type: Schema.Types.ObjectId, ref: 'Week'}],
+    weeks: [{type: Schema.Types.ObjectId, ref: 'Week'}]
 }
 // , {timestamps: true}
 );
@@ -29,7 +31,7 @@ Course.statics.getCoursesWithWeeks = function (arg1, arg2) {
 };
 
 Course.statics.getCourseWithWeeks = function (courseId, arg1, arg2) {
-    if(arg2)    //arg2 is Function, arg1 is fields filter
+    if(arg2)    //arg2 is Function, arg1 is projection filter
         return this.findById(courseId).populate('weeks', arg1).exec(arg2);
     else    //arg1 is Function
         return this.findById(courseId).populate('weeks').exec(arg1);

@@ -43,12 +43,12 @@ router.get('/', function (req, res) {
     Course.getCoursesWithWeeks('-_id -tasks', function(err, courses){
       if(err) {
         console.log("Population Error:", err);
-        res.render('index', { user : req.user });
+        return res.render('index', { user : req.user });
       }
       console.log("courses found:", courses);
       if(courses.length > 0)
         console.log("weeks in 1st course:", courses[0].weeks);
-      res.render('index', { user : req.user, courses: courses });
+        return res.render('index', { user : req.user, courses: courses });
     });
     // res.render('index', { user : req.user });
 });
@@ -121,27 +121,15 @@ router.get('/logout', function(req, res) {
 router.get('/login_register', function(req, res){
 
   // console.log(req.session);
-  res.render('login_register', {redirectedFrom: req.session.redirectedFrom, loginInfo: "Some important info", registerInfo: "Equally important info"});
+  var redirectedFrom = req.session.redirectedFrom;
 
-  delete req.session.redirectedFrom;
+  // need to unset session fields before render, because session.save() is called on HTTP request
+  req.session.redirectedFrom = undefined;
+  res.render('login_register', {redirectedFrom: redirectedFrom, loginInfo: "Some important info", registerInfo: "Equally important info"});
+
+
   // console.log(req.session);
 });
 
-
-// TODO should be moved to the start of '/week*' route
-// routes other than above only accessible to logged-in users
-// router.all('/*', requireAuthorization);
-
-// GET post assignment page
-// router.get('/week:id/post', function(req, res, next) {
-//   res.render('post', { title: 'Submit your assignment', week: req.params.id });
-// });
-//
-// // GET edit assignment page
-// router.get('/week:id/edit', function(req, res, next) {
-//   res.render('post', { title: 'Edit your assignment', week: req.params.id, toEdit: true });
-// });
-
-// -- TODO
 
 module.exports = router;

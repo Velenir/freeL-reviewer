@@ -3,6 +3,6 @@ extends page
 block main
   .container.text-center
     include ./mixins/logregForm.jade
-    +logregForm('/register', registerInfo)
+    +logregForm('/register', registerInfo)(autofocus)
       h1 Register Page
       p.lead If you don't have an account

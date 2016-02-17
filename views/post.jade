@@ -16,9 +16,10 @@ block form
       p.help-block Any comments or instructions you would like to leave for reviewers.
       
     h2= '(' + course + ',' + week + ')'
+    h3= 'weekId: ' + weekId
     input(type="hidden", name="course", value=course)
     input(type="hidden", name="week", value=week)
-    if toEdit
-      h3 You are resubmitting
+    if editing
+      h3 Resubmitting this assignment would mean losing any reviews it may have received.
     else
       h3 first submission
