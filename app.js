@@ -58,7 +58,7 @@ mongoose.connect('mongodb://localhost/passport_local_mongoose_express4', functio
 mongoose.connection.once('open', function(){
   console.log('Opened Connection');
   Account.find({}, function(err, users){
-    console.log(users);
+    console.log('USERS:', users);
   });
 });
 

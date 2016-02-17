@@ -11,6 +11,8 @@ function getReviewsN(revN) {
 var Submission = new Schema({
     course: {type: Number, ref: 'Course', required: true},
     week: {type: {obj:{type: Schema.Types.ObjectId, ref: 'Week'}, number: Number}, required: true},
+    user: {type: {userId: {type: Schema.Types.ObjectId, ref: 'Account', index: true}, username: String}, required: true},
+    title: {type: String, required: true, trim: true},
     submission: {type: String, required: true, trim: true},
     userComment: {type: String, trim: true},
     reviewsRequired: {type: Number, get: getReviewsN},
@@ -22,7 +24,7 @@ var Submission = new Schema({
     isReviewed: {type: Boolean, index: true}
   }, {timestamps: true});
 
-// Submission.index({course: 1, 'week.number': 1});
+Submission.index({course: 1, 'week.number': 1});
 
 // mongoose.model('Week').findOne({_id: '56b76e77faa0e9ba7a201218'}, function(err, week){
 //     console.log("Week:", week);
@@ -55,16 +57,25 @@ Submission.statics.updateReviewedStates = function (courseId, weekN) {
   });
 };
 
+// inserts or updates Submission with {course: currentWeek.course, 'week.number': currenWeek.weekN} (unique index)
+// if updates then resets isReviewed and reviews
+Submission.statics.upsertSub = function (userId, username, currenWeek, formBody, cb) {
+  return this.update({'user.userId': userId, course: currentWeek.course, 'week.number': currenWeek.weekN}, {'week.obj': currentWeek.week, title: formBody.title, submission: formBody.submission, userComment: formBody.comments, reviewsRequired: currentWeek.reviewsRequired, $setOnInsert: {username: username, isReviewed: false, reviews: []}}, {upsert: true}, cb);
+};
+
 Submission.pre('save', function(next) {
   console.log('SAVING Submission:', this);
+  // if reviewsRequired already set, skip resetting
   if(this.reviewsRequired) {
     this.updateIsReviewed();
     return next();
-  }
+  };
 
 
   this.populate({path: 'week.obj', model: 'Week'}, function(err, doc){
     if(err) return console.log('Submission Population Error', err);
+
+    // doc === this from outer function
 
     doc.reviewsRequired = doc.week.obj.reviewsRequired;
 
@@ -80,6 +91,15 @@ Submission.pre('save', function(next) {
 });
 
 Submission.post('save', function(doc){
+  console.log("SAVED Submission", doc);
+  console.log("This value:", this);
+  mongoose.model('Week').update({_id: doc.week.obj}, {$addToSet: {submissions: doc._id}}, function(err, raw){
+    if (err) return console.log('Week Update Error', err);
+    console.log('The raw response from Mongo was ', raw);
+  });
+});
+
+Submission.post('update', function(doc){
   console.log("SAVED Submission", doc);
   console.log("This value:", this);
   mongoose.model('Week').update({_id: doc.week.obj}, {$addToSet: {submissions: doc._id}}, function(err, raw){

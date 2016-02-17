@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 
 var Week = require('../models/week');
-var Submission = require('../models/submission');
+// var Submission = require('../models/submission');
 
 // if not logged in go to '/login_register'
 function requireAuthorization(req, res, next) {
@@ -41,11 +41,17 @@ router.get('/:id/week:n', function(req, res, next) {
 
 //                      method param uses /(?:post|edit) custom expression to capture; default would have been ([^\/]+)
 router.get('/:id/week:n/:method(?:post|edit)', function(req, res ,next){
-  // TODO inject weekId into req.session to make use of and subsequently unset in post form call
   console.log("path-to-reg");
 
   console.log("Caught params: id %d, n %d", req.params.id, req.params.n);
   console.log(req.params);
+
+  var currentWeek = req.session.currentWeek;
+  // if currentWeek already filled with id and is the same skip reassigning
+  // provided we can rely on weeks collection having unique {course, number} fileds
+  if(currentWeek && currentWeek.course === req.params.id && currentWeek.weekN === req.params.n && currentWeek.id)
+    return next();
+
   Week.findOne({course: req.params.id, number: req.params.n}, '_id', function(err, week){
     if(err) {
       console.log('Error getting week:',err);
@@ -56,8 +62,8 @@ router.get('/:id/week:n/:method(?:post|edit)', function(req, res ,next){
       console.log('No week found');
       return res.status(406).send('No such week');
     }
-    // get current weeks _id to use in post form
-    req.session.weekId = week._id;
+    // inject week data into req.session to make use of in post form call
+    req.session.currentWeek = {id: week._id, course: week.course, weekN: week.number, reviewsRequired: week.reviewsRequired};
 
     next();
   });
@@ -65,15 +71,14 @@ router.get('/:id/week:n/:method(?:post|edit)', function(req, res ,next){
 });
 
 //        req.params == regex.exec(url).slice(1)    matches get fed to req.params with 0, 1, 2... for keys
-router.get(/^\/([^\\/]+?)\/week([^\\/]+?)\/(?:post|edit)(?:\/(?=$))?$/i, function(req, rs ,next){
-  // TODO inject weekId into req.session to make use of and subsequently unset in post form call
-
-  console.log("Caught params: id %d, n %d", req.params[0], req.params[1]);
-  console.log(req.params);
-  next();
-
-
-});
+// router.get(/^\/([^\\/]+?)\/week([^\\/]+?)\/(?:post|edit)(?:\/(?=$))?$/i, function(req, rs ,next){
+//
+//   console.log("Caught params: id %d, n %d", req.params[0], req.params[1]);
+//   console.log(req.params);
+//   next();
+//
+//
+// });
 
 // router.param('id', function(req, res, next, id){
 //   console.log('ONE param: id %d', id);
@@ -87,6 +92,12 @@ router.get('/:id/week:n/post', function(req, res, next) {
 
 // GET edit assignment page
 router.get('/:id/week:n/edit', function(req, res, next) {
+  res.render('post', { title: 'Edit your assignment', week: req.params.n, editing: true, user: req.user });
+});
+
+// GET just submitted submission overview page
+router.get('/:id/week:n/:subid(\\w{24})', function(req, res, next) {
+  console.log('going to sub._id:', req.params.subid);
   res.render('post', { title: 'Edit your assignment', week: req.params.n, editing: true, user: req.user });
 });
 

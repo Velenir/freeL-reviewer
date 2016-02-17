@@ -5,6 +5,7 @@ var passport = require('passport');
 var Account = require('../models/account');
 var Week = require('../models/week');
 var Course = require('../models/course');
+var Submission = require('../models/submission');
 
 var router = express.Router();
 
@@ -129,6 +130,58 @@ router.get('/login_register', function(req, res){
 
 
   // console.log(req.session);
+});
+
+
+// On Submission form submission
+router.post('/addsubmission', function(req, res) {
+    Account.register(new Account({ username : req.body.username }), req.body.password, function(err, account) {
+        if (err) {
+          console.log("Register Error: "+ err);
+          return res.render(req.body.redirectedFrom ? "login_register" : "register", {registerInfo: err});
+        }
+
+        passport.authenticate('local')(req, res, function () {
+          if(req.body.redirectedFrom)
+          // redirect back from whence user came
+            res.redirect(req.body.redirectedFrom);
+          else
+            res.redirect('/');
+        });
+    });
+
+    var currentWeek = req.session.currentWeek;
+    if(!currentWeek) {
+      console.log('No currentWeek in user session');
+      return next(new Error('No currentWeek in user session'));
+    }
+
+    Submission.upsertSub(req.user._id, req.user.username, currentWeek, req.body, function(err, doc){
+      if(err) return next(err);
+
+      // add new sub._id to user's submissions and save if actually modified
+      req.user.submissions.addToSet(doc_id);
+      if(req.user.isModified()){
+        req.user.save(function(err){
+          if(err) {
+            console.log('Error adding sub_id to user:', err);
+            return next(err);
+          }
+
+          res.redirect('/course/' + currentWeek.course + '/week' + currentWeek.weekN +'/' + doc._id);
+        });
+      } else {
+        // go to view the submission
+        res.redirect('/course/' + currentWeek.course + '/week' + currentWeek.weekN +'/' + doc._id);
+      }
+    })
+
+    // var sub = new Submission(course: currentWeek.course, week: {obj: currentWeek.week, number: currentWeek.weekN}, title: req.body.title, submission: req.body.submission, userComment: req.body.comments, reviewsRequired: currentWeek.reviewsRequired);
+    // sub.save(function(err, doc){
+    //   if(err) return next(err);
+    //   // go to view the submission
+    //   res.redirect('/course/' + currentWeek.course + '/week' + currentWeek.weekN +'/' + doc._id);
+    // });
 });
 
 
