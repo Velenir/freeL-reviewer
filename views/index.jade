@@ -28,15 +28,16 @@ block main
                   button.btn.btn-default(type='button') Right
 
               table.table.table-striped.large
-                each week in course.weeks
+                each weekId in course.weeks                  
+                  - var week = weeksMap.get(weekId.toString())
                   tbody
                     td Week #{week.number}
                     td: a(href="course/#{course.id}/week#{week.number}/post") Post
                       | 
-                      span.badge= week.posts
+                      span.badge= week.countAll
                     td: a(href="course/#{course.id}/week#{week.number}/review") Review
                       | 
-                      span.badge= week.toReview
+                      span.badge= week.countReviewed
                     td: a(href="course/#{course.id}/week#{week.number}/overview") Overview
             unless ind === courses.length - 1
               li.list-group-item.list-group-item-divider

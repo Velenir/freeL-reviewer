@@ -7,7 +7,8 @@ var Account = new Schema({
     username: String,
     password: String,
     submissions: [{type: Schema.Types.ObjectId, ref: 'Submission'}],
-    comments: [{type: Schema.Types.ObjectId, ref: 'Comment'}]
+    comments: [{type: Schema.Types.ObjectId, ref: 'Comment'}],
+    hasReviewed: [{type: Schema.Types.ObjectId, ref: 'Submission'}]
 });
 
 Account.plugin(passportLocalMongoose);

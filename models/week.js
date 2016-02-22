@@ -15,8 +15,8 @@ function updateSubmissions(revN) {
 var Week = new Schema({
     number: {type: Number, required: true},
     tasks: [[String]],
-    posts: {type: Number, default: 0},
-    toReview: {type: Number, default: 0},
+    posts: {type: Number, default: 0},  //remove field?
+    toReview: {type: Number, default: 0},   //remove field? and insteand get via Submission.count()
     course: {type: Number, ref: 'Course', required: true},
     reviewsRequired: {type: Number, default: 3, set: updateSubmissions},
     submissions: [{type: Schema.Types.ObjectId, ref: 'Submission'}]
@@ -47,7 +47,23 @@ Week.post('save', function(result){
     this.updateSubRevs();
 });
 
-// var WScheme = mongoose.model('Week', Week);
+// Week.post('update', function(result){
+//     console.log('Week was updated:', result);
+//     console.log('contains revModified', result.revModified);
+// });
+
+Week.post('findOne', function(result){
+    console.log('Week was found:', result);
+    console.log('contains revModified', result.revModified);
+});
+
+
+// mongoose.connection.once('open', function () {
+//     WScheme.findOne({}, '-submissions', function (err, res) {
+//         console.log('FOUND', res);
+//     });
+// });
+var WScheme = mongoose.model('Week', Week);
 // var w1 = new WScheme({number: 3, course: 7, reviewsRequired: 5, submissions: ["56c2306160a6232a1cc74dc4"]});
 // w1.reviewsRequired = 6;
 // w1.save(function(err){
@@ -58,5 +74,5 @@ Week.post('save', function(result){
 // // w2.reviewsRequired = 1;
 //
 //
-// module.exports = WScheme;
-module.exports = mongoose.model('Week', Week);
+module.exports = WScheme;
+// module.exports = mongoose.model('Week', Week);

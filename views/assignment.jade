@@ -4,12 +4,12 @@ block main
   .container
     .row
       .page-header
-        h1
-          | Assignment: Exploring Ionic Framework
-          | 
-          small at 
-            | 
-            a(href="https://www.coursera.org/learn/hybrid-mobile-development/peer/VsOf7/exploring-ionic-framework") Coursera
+        block assignmentHeader
+          h1
+            small Week #{weekN} assignment: 
+            | Exploring Ionic Framework
+            small , available at 
+              a(href="https://www.coursera.org/learn/hybrid-mobile-development/peer/VsOf7/exploring-ionic-framework") Coursera
             
       .col-xs-12
         .panel.panel-info
@@ -19,7 +19,7 @@ block main
             block form              
             
           .panel-footer.clearfix
-            block footer
+            block formFooter
               .btn-group.btn-group-lg.pull-right(role='group')
                 button.btn.btn-primary(type='submit', form="submissionForm") Submit
                 button.btn.btn-warning(type='reset', form="submissionForm") Reset            

@@ -38,20 +38,60 @@ function alreadyLoggedIn(req, res, next) {
 
 
 /* GET home page. */
-router.get('/', function (req, res) {
-    // Course.find({}).populate('weeks').exec
-
-    Course.getCoursesWithWeeks('-_id -tasks', function(err, courses){
-      if(err) {
-        console.log("Population Error:", err);
-        return res.render('index', { user : req.user });
-      }
-      console.log("courses found:", courses);
-      if(courses.length > 0)
-        console.log("weeks in 1st course:", courses[0].weeks);
-        return res.render('index', { user : req.user, courses: courses });
+router.get('/', function (req, res, next) {
+    var courseFindPromise = Course.find({}).exec().catch(function (err) {
+      console.log('Courses find error:', err);
+      throw err;
     });
-    // res.render('index', { user : req.user });
+
+    // Course.find({}, function (err, courses) {
+    //   if(err) {
+    //     console.log("Courses Error:", err);
+    //     return res.render('index', { user : req.user });
+    //   }
+    //   console.log("courses found:", courses);
+    //   if(courses.length > 0)
+    //     console.log("weeks in 1st course:", courses[0].weeks);
+    //     return res.render('index', { user : req.user, courses: courses });
+    // });
+    //
+    var aggrPromise = Submission.aggregate({
+    	"$group" : {"_id" : "$week.obj", "number" : {"$first" : "$week.number"}, "countAll" : {"$sum" : 1},
+        "countReviewed" : {"$sum" : {"$cond" : {"if" : "$isReviewed", "then" : 1, "else" : 0}}}
+    	}
+    }).exec().then(function (result) {
+      // console.log('Promised aggr result:', result);
+      var mappedResult = new Map();
+      for(var i = 0; i< result.length;++i) {
+        mappedResult.set(result[i]._id, result[i]);
+      }
+
+      // console.log('mappedResult:', mappedResult);
+      return mappedResult;
+
+    }, function (err) {
+      console.log('Aggregation error:', err);
+      throw err;
+    });
+
+    Promise.all([courseFindPromise, aggrPromise]).then(function (results) {
+      // console.log('Courses found:', results[0]);
+      // console.log("weeks in 1st course:", results[0][0].weeks);
+      // console.log('weeks mapped:', results[1]);
+      return res.render('index', { user : req.user, courses: results[0], weeksMap: results[1] });
+    }, function (err) {
+      console.log('Caught error:', err);
+      next(err);
+    });
+
+    // Course.find({}).populate('weeks', '-_id -tasks').exec().then(function (courses) {
+    //   console.log("Courses promise fulfilled");
+    //   throw new Error('faux error');
+    //   return res.render('index', { user : req.user, courses: courses });
+    // }, function (err) {
+    //   console.log("Courses promise rejected");
+    //   next(err);
+    // });
 });
 
 // when accessing /register or /login when already logged in rediret to '/'
@@ -134,21 +174,7 @@ router.get('/login_register', function(req, res){
 
 
 // On Submission form submission
-router.post('/addsubmission', function(req, res) {
-    Account.register(new Account({ username : req.body.username }), req.body.password, function(err, account) {
-        if (err) {
-          console.log("Register Error: "+ err);
-          return res.render(req.body.redirectedFrom ? "login_register" : "register", {registerInfo: err});
-        }
-
-        passport.authenticate('local')(req, res, function () {
-          if(req.body.redirectedFrom)
-          // redirect back from whence user came
-            res.redirect(req.body.redirectedFrom);
-          else
-            res.redirect('/');
-        });
-    });
+router.post('/addsubmission', function(req, res, next) {
 
     var currentWeek = req.session.currentWeek;
     if(!currentWeek) {
@@ -159,20 +185,24 @@ router.post('/addsubmission', function(req, res) {
     Submission.upsertSub(req.user._id, req.user.username, currentWeek, req.body, function(err, doc){
       if(err) return next(err);
 
+      currentWeek.mySub = doc;
+
       // add new sub._id to user's submissions and save if actually modified
-      req.user.submissions.addToSet(doc_id);
+      req.user.submissions.addToSet(doc._id);
       if(req.user.isModified()){
+        console.log('Added new sub to user');
         req.user.save(function(err){
           if(err) {
             console.log('Error adding sub_id to user:', err);
             return next(err);
           }
 
-          res.redirect('/course/' + currentWeek.course + '/week' + currentWeek.weekN +'/' + doc._id);
+          res.redirect('/course/' + currentWeek.course + '/week' + currentWeek.weekN +'/post');
         });
       } else {
+        console.log("Updated a user's sub");
         // go to view the submission
-        res.redirect('/course/' + currentWeek.course + '/week' + currentWeek.weekN +'/' + doc._id);
+        res.redirect('/course/' + currentWeek.course + '/week' + currentWeek.weekN +'/post');
       }
     })
 

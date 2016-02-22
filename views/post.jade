@@ -1,25 +1,62 @@
 extend assignment
 
+
+if !submission
+  //- null and undefined throw on property access, but {} is truthy, so choose false (false.prop === undefined)
+  - submission = false
+- var subValid = Boolean(submission)
+
+if subValid
+  block append assignmentHeader
+    .alert.alert-success(role='alert') To share this submission you can use #[a.alert-link(href='/course/#{course}/week#{weekN}/review?sub=#{submission._id}') this] link.
+
 block form
+
   form#submissionForm(action="/addsubmission", method="post")
     .form-group
       label(for='title') Title:
-      input#title.form-control(type='text', name="title", placeholder='Title for your submission', autofocus, required)
+      input#title.form-control(type='text', name="title", placeholder='Title for your submission', autofocus=!subValid, required, value=submission.title, readonly=subValid)
     .form-group
       label(for='submission') URLs to files in your submission:                  
-      textarea#submission.form-control(name="submission", rows="8", placeholder="\nhttp://cloudshare.com/my_file.js\nhttp://cloudshare.com/my_other_file.html" required)
+      textarea#submission.form-control(name="submission", rows="8", placeholder="\nhttp://cloudshare.com/my_file.js\nhttp://cloudshare.com/my_other_file.html", required, readonly=subValid)= submission.submission
       p.help-block It is recommended that your files are either directly accessible at these URLs or included in one archived file. Please consider uploading to a file-sharing service such as Dropbox or Google Drive. In that case don't forget to make your file publicly accessible.
           
     .form-group
       label(for='comments') Comments:                  
-      textarea#comments.form-control(name="comments", rows="5") 
+      textarea#comments.form-control(name="comments", rows="5", readonly=subValid)= submission.userComment
       p.help-block Any comments or instructions you would like to leave for reviewers.
-      
-    h2= '(' + course + ',' + week + ')'
-    h3= 'weekId: ' + weekId
-    input(type="hidden", name="course", value=course)
-    input(type="hidden", name="week", value=week)
-    if editing
-      h3 Resubmitting this assignment would mean losing any reviews it may have received.
-    else
-      h3 first submission
+
+if submission
+  block prepend formFooter
+    .btn-group.btn-group-lg.pull-left(role='group')
+      button#editBtn.btn.btn-primary() Edit
+    .alert-parent.pull-left(style='overflow: hidden;')
+      .alert.alert-warning(role='alert', style='margin-bottom: 0;')
+        strong Warning!
+        |  Resubmitting this assignment would mean losing any reviews it may have received.
+    
+  block append scripts
+    script.
+      $(document).ready(function() {
+        var $formBtns = $('.panel-footer button[form="submissionForm"]').prop('disabled', true);
+
+        var $alertDiv = $('.panel-footer .alert-parent');
+        var $alert = $alertDiv.children('.alert');
+        $alert.css('width', $alert.outerWidth()+1);
+        $alertDiv.hide();
+        
+        
+        $('.panel-footer button#editBtn').click(function(){
+          
+          
+          $(this).parent().animate({width: 'toggle'});
+
+          
+          $alertDiv.animate({width: 'toggle'}, function(){
+            $alert.css('width', 'auto');
+            $formBtns.prop('disabled', false);
+            
+            $('input, textarea', 'form#submissionForm').prop('readonly', false);
+          });
+        });    
+      });

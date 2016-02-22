@@ -1,10 +1,10 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-function getReviewsN(revN) {
+function getReviewed(revN) {
   // getting actual value
   // will be set upon saving the document
-  return this.reviews.length >= reviewsRequired;
+  return this.reviews.length >= this.reviewsRequired;
 }
 
 
@@ -15,13 +15,13 @@ var Submission = new Schema({
     title: {type: String, required: true, trim: true},
     submission: {type: String, required: true, trim: true},
     userComment: {type: String, trim: true},
-    reviewsRequired: {type: Number, get: getReviewsN},
+    reviewsRequired: Number,
     reviews: [{
       author: {id: {type: Schema.Types.ObjectId, ref: 'Account'}, username: String},
       scores: [Number],
       comment: {type: String, trim: true}
     }],
-    isReviewed: {type: Boolean, index: true}
+    isReviewed: {type: Boolean, index: true}//, get: getReviewed}
   }, {timestamps: true});
 
 Submission.index({course: 1, 'week.number': 1});
@@ -30,12 +30,27 @@ Submission.index({course: 1, 'week.number': 1});
 //     console.log("Week:", week);
 // });
 
-// sub.reviewed is true if sub has received reviewsRequired number of reviews
-// Submission.virtual('reviewed').get(function(){
-//   return this.reviews.length === reviewsRequired;
-// });
+// sub.reviewed is true if sub has received at least reviewsRequired number of reviews
+Submission.virtual('calculatedReviewed').get(function(){
+  return this.reviews.length >= this.reviewsRequired;
+});
 
-Submission.methods.updateIsReviewed = function () {
+Submission.methods.updatedReviewed = function () {
+  console.log('reviews length', this.reviews.length);
+  console.log('rev req', this.reviewsRequired);
+
+  console.log('INSIDE modified', this.isModified('isReviewed'));
+  var res= this.isReviewed = this.reviews.length >= this.reviewsRequired;
+  console.log('INSIDE modified', this.isModified('isReviewed'));
+  return res;
+};
+
+Submission.methods.updatedReviewedFromWeek = function (week) {
+  if(week) {
+    this.reviewsRequired = week.reviewsRequired;
+  } else if(this.week.obj.reviewsRequired) {
+    this.reviewsRequired = this.week.obj.reviewsRequired;
+  }
   return this.isReviewed = this.reviews.length >= this.reviewsRequired;
 };
 
@@ -51,7 +66,9 @@ Submission.statics.updateReviewedStates = function (courseId, weekN) {
     if(!week) throw new Error('no week found');
 
     var revN = week.reviewsRequired;
-    return self.update({course: week.course, 'week.number': week.number, ['reviews.'+revN]: {$exists: true}}, {isReviewed: true}, {multi: true}).exec()
+    // revN should always be >0, but just in case we'll need submissions not up for review
+    var revField = revN > 0 ? 'reviews.'+(revN-1) : 'reviews';
+    return self.update({course: week.course, 'week.number': week.number, [revField]: {$exists: true}}, {isReviewed: true, reviewsRequired: revN}, {multi: true}).exec()
   }).catch(function(err){
     console.log('Error updating ReviewdStates:', err);
   });
@@ -59,15 +76,15 @@ Submission.statics.updateReviewedStates = function (courseId, weekN) {
 
 // inserts or updates Submission with {course: currentWeek.course, 'week.number': currenWeek.weekN} (unique index)
 // if updates then resets isReviewed and reviews
-Submission.statics.upsertSub = function (userId, username, currenWeek, formBody, cb) {
-  return this.update({'user.userId': userId, course: currentWeek.course, 'week.number': currenWeek.weekN}, {'week.obj': currentWeek.week, title: formBody.title, submission: formBody.submission, userComment: formBody.comments, reviewsRequired: currentWeek.reviewsRequired, $setOnInsert: {username: username, isReviewed: false, reviews: []}}, {upsert: true}, cb);
+Submission.statics.upsertSub = function (userId, username, currentWeek, formBody, cb) {
+  return this.findOneAndUpdate({'user.userId': userId, course: currentWeek.course, 'week.number': currentWeek.weekN}, {'week.obj': currentWeek.id, title: formBody.title, submission: formBody.submission, userComment: formBody.comments, reviewsRequired: currentWeek.reviewsRequired, $setOnInsert: {'user.username': username, isReviewed: false, reviews: []}}, {new: true, upsert: true}, cb);
 };
 
 Submission.pre('save', function(next) {
   console.log('SAVING Submission:', this);
   // if reviewsRequired already set, skip resetting
-  if(this.reviewsRequired) {
-    this.updateIsReviewed();
+  if(this.reviewsRequired !== undefined) {
+    this.updatedReviewed();
     return next();
   };
 
@@ -79,7 +96,7 @@ Submission.pre('save', function(next) {
 
     doc.reviewsRequired = doc.week.obj.reviewsRequired;
 
-    doc.updateIsReviewed();
+    doc.updatedReviewed();
 
     // TODO consider how to better set these: through post form or here
     // I say HERE
@@ -99,19 +116,30 @@ Submission.post('save', function(doc){
   });
 });
 
-Submission.post('update', function(doc){
-  console.log("SAVED Submission", doc);
-  console.log("This value:", this);
+Submission.post('findOneAndUpdate', function(doc){
+  console.log("Found and Updated Submission", doc);
+  // console.log("UPSERTED:", doc.upserted);
+  // console.log("This value conditions:", this._conditions);
   mongoose.model('Week').update({_id: doc.week.obj}, {$addToSet: {submissions: doc._id}}, function(err, raw){
     if (err) return console.log('Week Update Error', err);
     console.log('The raw response from Mongo was ', raw);
   });
 });
 
-// var SubmissionModel = mongoose.model('Submission', Submission);
-// var sb1 = new SubmissionModel({course: 0, week:{obj : '56b76e77faa0e9ba7a201218', number: 1}, submission: 'Example Submission', userComment: 'USER COMMENT'});
-// sb1.save();
+var SubmissionModel = mongoose.model('Submission', Submission);
+var sb1 = new SubmissionModel({course: 0, week:{obj : '56b76e77faa0e9ba7a201218', number: 1}, submission: 'Example Submission', userComment: 'USER COMMENT', reviewsRequired: 3, isReviewed: false, title: "disposable", user: {}});
+sb1.save(function (err, sub) {
+  console.log("err",err);
+  console.log('IS modified', sub.isModified('isReviewed'));
+  sub.reviews.push({}); sub.reviews.push({}); sub.reviews.push({});
+  console.log(sub.updatedReviewed());
+  // sub.isReviewed = false;
+  console.log('IS modified', sub.isModified('isReviewed'));
+  console.log('modified', sub.modifiedPaths());
+});
 
-// module.exports = SubmissionModel;
 
-module.exports = mongoose.model('Submission', Submission);
+
+module.exports = SubmissionModel;
+
+// module.exports = mongoose.model('Submission', Submission);
