@@ -124,22 +124,31 @@ Submission.post('findOneAndUpdate', function(doc){
     if (err) return console.log('Week Update Error', err);
     console.log('The raw response from Mongo was ', raw);
   });
+
+  //check if submission has enough reviews to be considered reviewed
+  //if so, save with new isReviewed value
+  doc.updatedReviewed();
+  if(doc.isModified('isReviewed')){
+    doc.save(function (err) {
+      if(err) console.log('Submission save error:', err);
+    })
+  }
 });
 
-var SubmissionModel = mongoose.model('Submission', Submission);
-var sb1 = new SubmissionModel({course: 0, week:{obj : '56b76e77faa0e9ba7a201218', number: 1}, submission: 'Example Submission', userComment: 'USER COMMENT', reviewsRequired: 3, isReviewed: false, title: "disposable", user: {}});
-sb1.save(function (err, sub) {
-  console.log("err",err);
-  console.log('IS modified', sub.isModified('isReviewed'));
-  sub.reviews.push({}); sub.reviews.push({}); sub.reviews.push({});
-  console.log(sub.updatedReviewed());
-  // sub.isReviewed = false;
-  console.log('IS modified', sub.isModified('isReviewed'));
-  console.log('modified', sub.modifiedPaths());
-});
+// var SubmissionModel = mongoose.model('Submission', Submission);
+// var sb1 = new SubmissionModel({course: 0, week:{obj : '56b76e77faa0e9ba7a201218', number: 1}, submission: 'Example Submission', userComment: 'USER COMMENT', reviewsRequired: 3, isReviewed: false, title: "disposable", user: {}});
+// sb1.save(function (err, sub) {
+//   console.log("err",err);
+//   console.log('IS modified', sub.isModified('isReviewed'));
+//   sub.reviews.push({}); sub.reviews.push({}); sub.reviews.push({});
+//   console.log(sub.updatedReviewed());
+//   // sub.isReviewed = false;
+//   console.log('IS modified', sub.isModified('isReviewed'));
+//   console.log('modified', sub.modifiedPaths());
+// });
 
 
 
-module.exports = SubmissionModel;
+// module.exports = SubmissionModel;
 
-// module.exports = mongoose.model('Submission', Submission);
+module.exports = mongoose.model('Submission', Submission);

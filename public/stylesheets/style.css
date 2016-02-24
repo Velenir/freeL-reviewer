@@ -35,11 +35,27 @@ a {
   color: #00B7FF;
 }
 
-.list-group > .list-group-item-divider {
+/*.list-group > .list-group-item-divider {
   border: none;
   background-color: #fcf8e3;
-  /*to negate margin-bottom: -1px of list-group-item above*/
+  to negate margin-bottom: -1px of list-group-item above
   margin-top: 1px;
+}*/
+
+.list-group > .list-group-item:not(:last-child) {
+  margin-bottom: 20px;
+}
+
+/*gutter-like separater between list elements*/
+.list-group > .list-group-item:not(:last-child):after {
+  content: '';
+  display: block;
+  background-color: #fcf8e3;
+  position: absolute;
+  bottom: -21px;
+  margin: 0 -15px;
+  height: 20px;
+  width: 100%;
 }
 
 /*otherwise textarea can be resized outside .panel along x-axis*/

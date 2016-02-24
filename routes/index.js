@@ -189,7 +189,7 @@ router.post('/addsubmission', function(req, res, next) {
 
       // add new sub._id to user's submissions and save if actually modified
       req.user.submissions.addToSet(doc._id);
-      if(req.user.isModified()){
+      if(req.user.isModified('submissions')){
         console.log('Added new sub to user');
         req.user.save(function(err){
           if(err) {
