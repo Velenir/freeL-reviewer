@@ -1,0 +1,14 @@
+mixin submissionForm
+  form#submissionForm(action="/addsubmission", method="post")
+    .form-group
+      label(for='title') Title:
+      input#title.form-control(type='text', name="title", placeholder='Title for your submission', autofocus=!subValid, required, value=submission.title, readonly=subValid)
+    .form-group
+      label(for='submission') URLs to files in your submission:                  
+      textarea#submission.form-control(name="submission", rows="8", placeholder="\nhttp://cloudshare.com/my_file.js\nhttp://cloudshare.com/my_other_file.html", required, readonly=subValid)= submission.submission
+      p.help-block It is recommended that your files are either directly accessible at these URLs or included in one archived file. Please consider uploading to a file-sharing service such as Dropbox or Google Drive. In that case don't forget to make your file publicly accessible.
+          
+    .form-group
+      label(for='comments') Comments:                  
+      textarea#comments.form-control(name="comments", rows="5", readonly=subValid)= submission.userComment
+      p.help-block Any comments or instructions you would like to leave for reviewers.

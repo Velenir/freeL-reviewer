@@ -1,0 +1,33 @@
+extend assignment
+
+
+block prepend panelBody
+  .panel-body
+    .form-group
+      label Title:
+      .form-control= submission.title
+    .form-group
+      label Submission:
+      //- DONE:0 wrap links in <a>
+      .form-control.submission-text
+        include ./mixins/linkify.jade
+        +linkify(submission.submission)
+    if submission.userComment
+      form-group
+        label Comments and instructions:
+        .form-control.submission-text= submission.userComment
+        
+        
+              
+  include ./mixins/taskPanels.jade
+  //- - var reviews = [{scores:[[1,1,0],[0,0],[1,0]]}, {scores:[[0,1,0],[1,1],[1,0]]}, {scores:[[1,1,0],[0,0],[1,0]]}, {scores:[[1,1,0],[1,0],[1,0]]}]
+  +taskPanels(tasks)
+  
+block form  
+  form#submissionForm(action="/addreview", method="post")
+    .form-group
+      label(for='comment') Comments:                  
+      textarea#comment.form-control(name="comment", rows="5", required)
+      p.help-block Any comments or clarification of scores given.
+
+  

@@ -1,0 +1,19 @@
+mixin linkify(str)
+  - var urlRe = /(https?|ftp):\/\/[^\s/$.?#].[^\s]*/g
+  - var matchedArray; // Array of [String text, Boolean isLink]
+  - var result = [], start = 0
+  - while ((matchedArray = urlRe.exec(str)) !== null) {
+    - result.push([str.slice(start, matchedArray.index), false])
+    - result.push([matchedArray[0], true])
+    - start = urlRe.lastIndex
+  - }
+  - result.push([str.slice(start), false])
+  
+  each item in result
+    //- if isLink = true
+    if item[1] 
+      a(href=item[0])= item[0]
+      //- if plain text
+    else
+      = item[0]
+      

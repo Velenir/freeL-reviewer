@@ -1,0 +1,47 @@
+mixin taskPanels(tasks, reviews)
+  each task, ind in tasks
+    .panel-heading Task #{ind+1} #{task.title}
+    if task.helpText
+      //- WARNING careful, helpText gets evalled (allows to include img, though)
+      .task-help-text!= task.helpText
+    ul.list-group
+      each criterion, i in task.criteria
+        li.list-group-item
+          p.list-group-item-heading= criterion
+          
+          - var hasReviews = Boolean(reviews)
+          - var firstChecked
+          
+          if hasReviews
+            - var count = 0, total = 0
+            - var reviewersByScore = {} // NOTE not an Array to account for possible float or non-numeric scores in the future
+            each review, rN in reviews
+              if review.scores[ind] && review.scores[ind][i] !== undefined
+                - var score = review.scores[ind][i]
+                - total += score
+                - ++count
+                - reviewersByScore[score] ? reviewersByScore[score].push(rN) : reviewersByScore[score] = [rN]
+            - firstChecked = (count ? Math.round(total/count) : 0) === 1
+            
+          .radio
+            label
+              input(type="radio", name="scores[#{ind}][#{i}]", value=1, form=reviews ? false : "submissionForm", required=!hasReviews, disabled=hasReviews, checked=hasReviews && firstChecked)
+              | 1 pt
+              br
+              | Yes
+              
+            if hasReviews && reviewersByScore[1]
+              .pull-right
+                each number in reviewersByScore[1]
+                  .circle-number= number+1
+          .radio
+            label
+              input(type="radio", name="scores[#{ind}][#{i}]", value=0, form=reviews ? false : "submissionForm", disabled=hasReviews, checked=hasReviews && !firstChecked)
+              | 0 pts
+              br
+              | No
+              
+            if hasReviews && reviewersByScore[0]
+              .pull-right
+                each number in reviewersByScore[0]
+                  .circle-number= number+1

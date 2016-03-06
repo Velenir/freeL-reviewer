@@ -1,41 +1,64 @@
 extend assignment
 
 
-if !submission
-  //- null and undefined throw on property access, but {} is truthy, so choose false (false.prop === undefined)
-  - submission = false
-- var subValid = Boolean(submission)
-
-if subValid
-  block append assignmentHeader
+block append assignmentHeader
+  if !submission
+    //- null and undefined throw on property access, but {} is truthy, so choose false (false.prop === undefined)
+    - submission = false
+  - var subValid = Boolean(submission)
+  
+  if subValid
     .alert.alert-success(role='alert') To share this submission you can use #[a.alert-link(href='/course/#{course}/week#{weekN}/review?sub=#{submission._id}') this] link.
 
-block form
+block assignmentHeaderRight
+  if submission
+    h2.review-others-link: small: a(href="review") Review others
 
-  form#submissionForm(action="/addsubmission", method="post")
-    .form-group
-      label(for='title') Title:
-      input#title.form-control(type='text', name="title", placeholder='Title for your submission', autofocus=!subValid, required, value=submission.title, readonly=subValid)
-    .form-group
-      label(for='submission') URLs to files in your submission:                  
-      textarea#submission.form-control(name="submission", rows="8", placeholder="\nhttp://cloudshare.com/my_file.js\nhttp://cloudshare.com/my_other_file.html", required, readonly=subValid)= submission.submission
-      p.help-block It is recommended that your files are either directly accessible at these URLs or included in one archived file. Please consider uploading to a file-sharing service such as Dropbox or Google Drive. In that case don't forget to make your file publicly accessible.
-          
-    .form-group
-      label(for='comments') Comments:                  
-      textarea#comments.form-control(name="comments", rows="5", readonly=subValid)= submission.userComment
-      p.help-block Any comments or instructions you would like to leave for reviewers.
+block panelHeading
+  .panel-heading(data-toggle=submission.isReviewed ? 'collapse' : false, 'data-target'=submission.isReviewed ? '#collapseOne' : false)
+    h3.panel-title= title
 
-if submission
-  block prepend formFooter
+block panelBody
+  include ./mixins/submissionForm.jade
+  if submission.isReviewed
+    #collapseOne.panel-collapse.collapse
+      .panel-body
+        +submissionForm
+  else
+    .panel-body
+      +submissionForm
+      
+
+
+  if submission.isReviewed
+    .panel-heading(data-toggle="collapse", data-target="#collapseTwo"): h3.panel-title Scroes you have received:
+    #collapseTwo.panel-collapse.collapse.in
+      //- reviewed tasks with scores
+      include ./mixins/taskPanels.jade
+      +taskPanels(tasks, submission.reviews)
+      
+      if submission.reviews.some(function(el){return Boolean(el.comment);})
+        
+        .panel-body.reviewersComments
+          label Reviewers' comments:
+          br
+          each review, index in submission.reviews
+            if review.comment
+              .form-group.clearfix
+                .circle-number.pull-left= index+1
+                .form-control.submission-text= review.comment
+
+block prepend formFooter
+  if submission
     .btn-group.btn-group-lg.pull-left(role='group')
       button#editBtn.btn.btn-primary() Edit
     .alert-parent.pull-left(style='overflow: hidden;')
-      .alert.alert-warning(role='alert', style='margin-bottom: 0;')
+      .alert.alert-warning(role='alert', style='margin-bottom: 0; padding: 10px;')
         strong Warning!
         |  Resubmitting this assignment would mean losing any reviews it may have received.
     
-  block append scripts
+block scripts
+  if submission
     script.
       $(document).ready(function() {
         var $formBtns = $('.panel-footer button[form="submissionForm"]').prop('disabled', true);
@@ -45,11 +68,14 @@ if submission
         $alert.css('width', $alert.outerWidth()+1);
         $alertDiv.hide();
         
+
         
         $('.panel-footer button#editBtn').click(function(){
           
           
-          $(this).parent().animate({width: 'toggle'});
+          $(this).parent().animate({width: 'toggle'}, function(){
+            $(this).remove();
+          });
 
           
           $alertDiv.animate({width: 'toggle'}, function(){
@@ -57,6 +83,9 @@ if submission
             $formBtns.prop('disabled', false);
             
             $('input, textarea', 'form#submissionForm').prop('readonly', false);
+            
+            $('#collapseTwo').collapse('hide');
+            $('#collapseOne').collapse('show');
           });
         });    
       });

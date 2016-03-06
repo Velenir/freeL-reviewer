@@ -11,7 +11,7 @@ block main
   .container
     .row
       .col-sm-12.col-xs-12
-        ul.list-group
+        ul#courses.list-group
           each course, ind in courses
             li.list-group-item            
               h2.list-group-item-heading= course.name
@@ -23,22 +23,28 @@ block main
               
               p
                 .btn-group.btn-group-lg(role='group')
-                  button.btn.btn-default(type='button') Week 1   
+                  a.btn.btn-default(type='button') Week 1   
                   button.btn.btn-default(type='button') Middle  
                   button.btn.btn-default(type='button') Right
 
-              table.table.table-striped.large
+              table.table.table-striped
+                tbody
                 each weekId in course.weeks                  
                   - var week = weeksMap.get(weekId.toString())
-                  tbody
-                    td Week #{week.number}
+                  tr
+                    th Week #{week.number}
                     td: a(href="course/#{course.id}/week#{week.number}/post") Post
                       | 
                       span.badge= week.countAll
-                    td: a(href="course/#{course.id}/week#{week.number}/review") Review
+                    td: a(href="course/#{course.id}/week#{week.number}/review") Waiting for Review
                       | 
-                      span.badge= week.countReviewed
-                    td: a(href="course/#{course.id}/week#{week.number}/overview") Overview
+                      span.badge= week.countAll - week.countReviewed
+                    if user
+                      td: a(href="course/#{course.id}/week#{week.number}/review") Available for You to Review
+                        | 
+                        span.badge= week.availableForReview
+                    //- TODO:0 make an overview page with pagination through all submissions
+                    //- td: a(href="course/#{course.id}/week#{week.number}/overview") Overview
 
 
     .row

@@ -51,7 +51,7 @@ router.get('/:id/week:n', function(req, res, next) {
 //   var currentWeek = req.session.currentWeek;
 //   // if currentWeek already filled with id and is the same skip reassigning
 //   // provided we can rely on weeks collection having unique {course, number} fileds
-//   if(currentWeek && currentWeek.course === req.params.id && currentWeek.weekN === req.params.n && currentWeek.id)
+//   if(currentWeek && currentWeek.course == req.params.id && currentWeek.weekN == req.params.n && currentWeek.id)
 //     return next();
 //
 //   Week.findOne({course: req.params.id, number: req.params.n}, '_id submissions').populate({path: 'submissions', match: {'user.userId': req.user._id}}).exec(function(err, week){
@@ -91,6 +91,7 @@ router.get('/:id/week:n', function(req, res, next) {
 // GET post assignment page
 router.get('/:id/week:n/post', function(req, res, next) {
   var currentWeek = req.session.currentWeek;
+  console.log('STAGE 1');
   // if currentWeek already filled with id and is the same skip reassigning
   // provided we can rely on weeks collection having unique {course, number} fileds
   // == instead of === because course is int and id is String
@@ -100,15 +101,20 @@ router.get('/:id/week:n/post', function(req, res, next) {
     if(currentWeek.mySub) {
       req.submission = currentWeek.mySub;
       currentWeek.mySub = undefined;
+      // console.log('had mySub with:', req.submission);
+      // console.log('had updatedReviewed method:', req.submission.updatedReviewed);
+      // console.log('calculatedReviewed:', req.submission.calculatedReviewed);
       return next();
     }
 
-    Submission.findOne({course: req.params.id, 'week.number': req.params.n, 'user.userId': req.user._id}, function (err, sub) {
+    console.log('STAGE 1.5');
+
+    Submission.findOne({course: +req.params.id, 'week.number': +req.params.n, 'user.userId': req.user._id}, function (err, sub) {
       if(err) return next(err);
 
-      req.submission= sub;
+      req.submission = sub;
       if(sub) console.log('found sub for user', req.user._id);
-      else console.log('no sub found for user', req.user._id);
+      else console.log('no sub found for user', req.user._id, 'in week', req.params.n, 'in course', req.params.id);
       next();
     });
     return;
@@ -116,7 +122,9 @@ router.get('/:id/week:n/post', function(req, res, next) {
 
   var condition = currentWeek && currentWeek.id ? {_id : currentWeek.id} : {course: req.params.id, number: req.params.n};
 
-  Week.findOne(condition, '_id submissions reviewsRequired tasks').populate({path: 'submissions', match: {'user.userId': req.user._id}}).exec(function(err, week){
+  console.log('STAGE 1.7');
+
+  Week.findOne(condition).populate({path: 'submissions', match: {'user.userId': req.user._id}}).exec(function(err, week){
     if(err) {
       console.log('Error getting week:',err);
       return res.status(406).send('Error getting week:',err);
@@ -126,14 +134,14 @@ router.get('/:id/week:n/post', function(req, res, next) {
       console.log('No week found');
       return res.status(406).send('No such week');
     }
-    console.log('Populated week:', week);
-    console.log('Submissions:', week.submissions);
+    // console.log('Populated week:', week);
+    // console.log('Submissions:', week.submissions);
     // inject week data into req.session to make use of in post form call
     req.session.currentWeek = {id: week._id, course: week.course, weekN: week.number, reviewsRequired: week.reviewsRequired, tasks: week.tasks};
     req.submission = week.submissions.length ? week.submissions[0] : null;
 
     if(req.submission) {
-      // in case there wwas a change in weeks collection
+      // in case there was a change in weeks collection
       req.submission.updatedReviewedFromWeek(week);
     }
     next();
@@ -141,37 +149,19 @@ router.get('/:id/week:n/post', function(req, res, next) {
 
 
 }, function (req, res) {
+  console.log('STAGE 2');
   console.log('rendering with sub:', req.submission);
+  console.log('and currentWeek:', req.session.currentWeek);
+  // console.log('has updatedReviewed method:', req.submission.updatedReviewed);
+  // console.log('calculatedReviewed:', req.submission.calculatedReviewed);
   var sub = req.submission;
-  // if(sub && sub.updatedReviewed()){
-  //   var currentWeek = req.session.currentWeek;
-  //   if(currentWeek.tasks) {
-  //     res.render('post', { title: 'Overview your assignment',course: req.params.id, weekN: req.params.n, user: req.user, submission: sub, tasks: currentWeek.tasks});
-  //   } else {
-  //     sub.populate({path: 'week.obj', select: 'tasks', model: 'Week'}).exec(function (err, subDoc) {
-  //       if(err) return next(err);
-  //
-  //       currentWeek.tasks = subDoc.week.obj.tasks;
-  //
-  //       // in case there wwas a change in weeks collection
-  //       subDoc.updatedReviewedFromWeek();
-  //       res.render('post', { title: 'Overview your assignment',course: req.params.id, weekN: req.params.n, user: req.user, submission: subDoc, tasks: currentWeek.tasks});
-  //     });
-  //   }
-  //
-  //   // var promise = currentWeek.tasks ? new Promise(sub) : sub.populate({path: 'week.obj', select: 'tasks', model: 'Week'}).exec();
-  //   // promise.then(function (subDoc) {
-  //   //   if(!currentWeek.tasks) currentWeek.tasks = subDoc.week.obj.tasks;
-  //   //
-  //   //   res.render('post', { title: 'Overview your assignment',course: req.params.id, weekN: req.params.n, user: req.user, submission: subDoc, tasks: currentWeek.tasks});
-  //   // }, function (err) {next(err);});
-  //   return;
-  // }
-  res.render('post', { title: sub ? sub.updatedReviewed() ? 'Your assignment has been reviewed' : 'Edit your assignment' : 'Submit your assignment',course: req.params.id, weekN: req.params.n, user: req.user, submission: sub, tasks: req.session.currentWeek.tasks});
+
+  // NOTE sub.updatedReviewed gets undefined after JSON.stringify() of on req.session save
+  res.render('post', { title: sub ? Submission.schema.methods.updatedReviewed.call(sub) ? 'Your assignment has been reviewed' : 'Edit your assignment' : 'Submit your assignment', course: req.params.id, weekN: req.params.n, user: req.user, submission: sub, tasks: req.session.currentWeek.tasks});
 });
 
 // GET edit assignment page
-// TODO remove this route
+// TODO:30 remove this route
 router.get('/:id/week:n/edit', function(req, res, next) {
   res.render('post', { title: 'Edit your assignment', week: req.params.n, editing: true, user: req.user });
 });
@@ -182,7 +172,7 @@ router.get('/:id/week:n/review', function(req, res, next) {
     Submission.findById(req.query.sub).populate({path: 'week.obj', select: '-submissions -toReview -posts', model: 'Week'}).exec(function (err, sub) {
       if(err) return next(err);
 
-      if(!sub) return res.status(406).send('No such submission');
+      if(!sub) return next(new Error("No submission found."));
 
       // in case there was a change in weeks collection
       // console.log('In /review?sub=  sub:', sub);
@@ -196,19 +186,20 @@ router.get('/:id/week:n/review', function(req, res, next) {
 
       // if same user, don't let him review his assignment
       if(sub.user.userId.toString() === req.user._id.toString()) {
-
+        console.log('Redirecting to /post', ':: has updatedReviewed method:', sub.updatedReviewed);
+        console.log("passing sub:", sub);
         req.session.currentWeek.mySub = sub;
-        return res.redirect(`/${week.course}/week${week.number}/post`);
+        return res.redirect(`/course/${week.course}/week${week.number}/post`);
       }
 
       // WARNING don't set req.session.reviewingSub here; it should be only applicable to normal /review submissions
-
+      console.log('going to sub._id:', req.params.subid);
       res.render('review', { title: 'Review assignment', course: req.params.id, weekN: req.params.n, user: req.user, submission: sub, tasks: week.tasks});
     });
     return;
   }
   next();
-}, //TODO get previous route's currentWeek population into a function and here
+}, //TODO:10 get previous route's currentWeek population into a function and here
 function(req, res, next) {
   var currentWeek = req.session.currentWeek;
   // if currentWeek already filled with id and is the same skip reassigning
@@ -220,7 +211,7 @@ function(req, res, next) {
     return next();
   }
 
-  var condition = currentWeek.id ? {_id : currentWeek.id} : {course: req.params.id, number: req.params.n};
+  var condition = (currentWeek && currentWeek.id) ? {_id : currentWeek.id} : {course: req.params.id, number: req.params.n};
 
   Week.findOne(condition, '_id number course reviewsRequired tasks', function(err, week){
     if(err) {
@@ -241,38 +232,46 @@ function(req, res, next) {
 
 },
 function (req,res, next) {
-  var reviewingSub = req.session.reviewingSub;
-  if(reviewingSub && reviewingSub.course === req.params.id && reviewingSub.week.number === req.params.n && reviewingSub.week.obj === currentWeek.id) {
+  var reviewingSub = req.session.reviewingSub, currentWeek = req.session.currentWeek;
+  if(reviewingSub && reviewingSub.course == req.params.id && reviewingSub.week.number == req.params.n && reviewingSub.week.obj.toString() === currentWeek.id.toString()) {
 
     return next();
   } else {
+    var subsNotForReview = [];
+    if(req.user) {
+      if(req.user.submissions) subsNotForReview = subsNotForReview.concat(req.user.submissions);
+      if(req.user.hasReviewed) subsNotForReview = subsNotForReview.concat(req.user.hasReviewed);
+    }
 
-    Promise.coroutine(function* () {
+    Submission.aggregate([
+      {"$match" : {"course": +req.params.id, 'week.number': +req.params.n, "isReviewed": false, "_id": {"$nin": subsNotForReview}}},
+      {"$project" : {"course" : 1, "week" : 1, "title" : 1,	"submission": 1, "userComment": 1, "reviewsRequired" : 1, "reviewsN" : {"$size" : "$reviews"}}},
+      {"$sort" : {"reviewsN" : -1}},
+      {"$limit" : 5},
+      {"$sample" : {"size" : 1}}],
+      function (err, subs) {
+        if(err) {
+          console.log("Error aggregating submissions for review");
+          next(err);
+        }
 
-      var revN = currentWeek.reviewsRequired;
-      var result;
+        var sub = subs[0];
+        console.log("Aggregated sub:", sub);
 
-      while(revN > 0) {
-        result = yield Submission.findOne({course: req.params.id, 'week.number': req.params.n, isReviewed: false, _id: {$nin: req.user.hasReviewed}, ['reviews.'+(revN-1)]: {$exists: true}}).exec();
-
-        if(result) break;
-        --revN;
-      }
-      console.log('Got from promise generator:', result);
-
-      req.session.reviewingSub = result;
-
-      next();
-
-    })().catch(function(err) {
-      //handle errors for any yielded promise
-      if(err) next(err);
-    });
+        req.session.reviewingSub = sub;
+        next();
+      });
   }
 },
 function (req, res) {
-  console.log('going to sub._id:', req.params.subid);
-  res.render('review', { title: 'Review assignment', course: req.params.id, weekN: req.params.n, editing: true, user: req.user, submission: req.session.reviewingSub, tasks: req.session.currentWeek.tasks});
+
+  var sub = req.session.reviewingSub;
+  if(sub) {
+    res.render('review', { title: 'Review assignment', course: req.params.id, weekN: req.params.n, user: req.user, submission: req.session.reviewingSub, tasks: req.session.currentWeek.tasks});
+  } else{
+    // DONE:10 create nothingtoreview.jade view
+    res.render('nothingtoreview', {user: req.user});
+  }
 });
 
 

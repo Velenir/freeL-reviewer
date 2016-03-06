@@ -1,11 +1,39 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
+function NumberArray(key, options) {
+  mongoose.SchemaType.call(this, key, options, 'NumberArray');
+}
+NumberArray.prototype = Object.create(mongoose.SchemaType.prototype);
+
+// `cast()` takes a parameter that can be anything. You need to
+// validate the provided `val` and throw a `CastError` if you
+// can't convert it.
+NumberArray.prototype.cast = function(val) {
+
+    var res = Array.from(val, el => {
+      var n = Number(el);
+      if(isNaN(n)) throw new mongoose.SchemaType.CastError('NumberArray', val + ' contains not a number');
+      return n;
+    });
+    console.log(val, '=>', res);
+    return res;
+};
+
+// Don't forget to add `NumberArray` to the type registry
+mongoose.Schema.Types.NumberArray = NumberArray;
+
 function getReviewed(revN) {
   // getting actual value
   // will be set upon saving the document
   return this.reviews.length >= this.reviewsRequired;
 }
+
+var Review = new Schema({
+  author: {id: {type: Schema.Types.ObjectId, ref: 'Account'}, username: String},
+  scores: [NumberArray],
+  comment: {type: String, trim: true}
+});
 
 
 var Submission = new Schema({
@@ -16,11 +44,7 @@ var Submission = new Schema({
     submission: {type: String, required: true, trim: true},
     userComment: {type: String, trim: true},
     reviewsRequired: Number,
-    reviews: [{
-      author: {id: {type: Schema.Types.ObjectId, ref: 'Account'}, username: String},
-      scores: [Number],
-      comment: {type: String, trim: true}
-    }],
+    reviews: [Review],
     isReviewed: {type: Boolean, index: true}//, get: getReviewed}
   }, {timestamps: true});
 
@@ -36,14 +60,9 @@ Submission.virtual('calculatedReviewed').get(function(){
 });
 
 Submission.methods.updatedReviewed = function () {
-  console.log('reviews length', this.reviews.length);
-  console.log('rev req', this.reviewsRequired);
-
-  console.log('INSIDE modified', this.isModified('isReviewed'));
-  var res= this.isReviewed = this.reviews.length >= this.reviewsRequired;
-  console.log('INSIDE modified', this.isModified('isReviewed'));
-  return res;
-};
+  console.log('INSIDE updatedReviewed');
+  return this.isReviewed = this.reviews.length >= this.reviewsRequired;
+  };
 
 Submission.methods.updatedReviewedFromWeek = function (week) {
   if(week) {
@@ -74,10 +93,21 @@ Submission.statics.updateReviewedStates = function (courseId, weekN) {
   });
 };
 
-// inserts or updates Submission with {course: currentWeek.course, 'week.number': currenWeek.weekN} (unique index)
-// if updates then resets isReviewed and reviews
+// inserts or updates Submission with {course: currentWeek.course, 'week.number': currentWeek.weekN} (unique index)
+// also resets isReviewed and reviews
 Submission.statics.upsertSub = function (userId, username, currentWeek, formBody, cb) {
-  return this.findOneAndUpdate({'user.userId': userId, course: currentWeek.course, 'week.number': currentWeek.weekN}, {'week.obj': currentWeek.id, title: formBody.title, submission: formBody.submission, userComment: formBody.comments, reviewsRequired: currentWeek.reviewsRequired, $setOnInsert: {'user.username': username, isReviewed: false, reviews: []}}, {new: true, upsert: true}, cb);
+  return this.findOneAndUpdate({'user.userId': userId, course: currentWeek.course, 'week.number': currentWeek.weekN}, {'week.obj': currentWeek.id, title: formBody.title, submission: formBody.submission, userComment: formBody.comments, reviewsRequired: currentWeek.reviewsRequired, isReviewed: false, reviews: [], $setOnInsert: {'user.username': username}}, {new: true, upsert: true}, cb);
+};
+
+// updates Submission with a new review
+Submission.statics.addReview = function (subId, author, reviewBody, cb) {
+  // var scores = reviewBody.scores.map(function (nestedArr) {
+  //   return nestedArr.map(function (strEl) {return parseInt(strEl, 10);});
+  // });
+  // console.log("converted scores:", scores);
+  var review = {author: author, scores: reviewBody.scores, comment: reviewBody.comment};
+
+  return this.findByIdAndUpdate(subId, {$push: {reviews: review}}, {new: true}, cb);
 };
 
 Submission.pre('save', function(next) {
@@ -98,13 +128,8 @@ Submission.pre('save', function(next) {
 
     doc.updatedReviewed();
 
-    // TODO consider how to better set these: through post form or here
-    // I say HERE
-    // doc.course = doc.week.obj.course;
-    // doc.week.number = doc.week.obj.number;
     next();
   });
-  // next();
 });
 
 Submission.post('save', function(doc){
@@ -150,5 +175,32 @@ Submission.post('findOneAndUpdate', function(doc){
 
 
 // module.exports = SubmissionModel;
+
+
+// toObject is called when receiving document from database
+// toJSON is called when retrieving from serialized data storage (as in req.session.sub = sub => session gets saved => session gets retrieved already stringified)
+// toObject and toJSON destroy virtuals and methods/statics by default, (can preserve virtuals with {getters: true, setters: true})
+// toJSON always destroys functions
+// toObject can get functions back in transform
+
+Submission.set('toObject', { getters: true});//, transform: function (doc, ret, options) {
+//   ret.updatedReviewed = Submission.methods.updatedReviewed;
+// } });
+Submission.set('toJSON', { getters: true});
+// specify the transform schema option
+if (!Submission.options.toObject) Submission.options.toObject = {};
+Submission.options.toObject.transform = function (doc, ret, options) {
+  console.log('toObject');
+  ret.updatedReviewed = Submission.methods.updatedReviewed;
+  ret.Objected = true;
+};
+
+if (!Submission.options.toJSON) Submission.options.toJSON = {};
+Submission.options.toJSON.transform = function (doc, ret, options) {
+  console.log('toJSON');
+  ret.updatedReviewed = Submission.methods.updatedReviewed;
+  ret.FUNC = function (arguments) {console.log('FUNC');}
+  ret.JSONed = true;
+};
 
 module.exports = mongoose.model('Submission', Submission);

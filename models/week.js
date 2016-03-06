@@ -14,7 +14,7 @@ function updateSubmissions(revN) {
 
 var Week = new Schema({
     number: {type: Number, required: true},
-    tasks: [[String]],
+    tasks: [{title: String, helpText: String, criteria: [String]}],
     posts: {type: Number, default: 0},  //remove field?
     toReview: {type: Number, default: 0},   //remove field? and insteand get via Submission.count()
     course: {type: Number, ref: 'Course', required: true},

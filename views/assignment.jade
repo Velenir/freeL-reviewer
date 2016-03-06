@@ -5,21 +5,28 @@ block main
     .row
       .page-header
         block assignmentHeader
-          h1
-            small Week #{weekN} assignment: 
-            | Exploring Ionic Framework
-            small , available at 
-              a(href="https://www.coursera.org/learn/hybrid-mobile-development/peer/VsOf7/exploring-ionic-framework") Coursera
-            
-      .col-xs-12
-        .panel.panel-info
-          .panel-heading
-            h3.panel-title= title
-          .panel-body      
-            block form              
-            
-          .panel-footer.clearfix
-            block formFooter
-              .btn-group.btn-group-lg.pull-right(role='group')
-                button.btn.btn-primary(type='submit', form="submissionForm") Submit
-                button.btn.btn-warning(type='reset', form="submissionForm") Reset            
+          .clearfix
+            h2.assignment-header
+              //- small Week #{weekN} assignment: 
+              //- | Exploring Ionic Framework
+              //- small , available at 
+              a(href="https://www.coursera.org/learn/hybrid-mobile-development/peer/VsOf7/exploring-ionic-framework" title="at Coursera") Exploring Ionic Framework
+            block assignmentHeaderRight
+            //- h1.review-others-link: small: a(href="review") Review others
+
+              
+      block assignmentBody            
+        .col-xs-12
+          #assignment.panel.panel-info
+            block panelHeading
+              .panel-heading
+                h3.panel-title= title
+            block panelBody
+              .panel-body
+                block form              
+              
+            .panel-footer.clearfix
+              block formFooter
+                .btn-group.btn-group-lg.pull-right(role='group')
+                  button.btn.btn-primary(type='submit', form="submissionForm") Submit
+                  button.btn.btn-warning(type='reset', form="submissionForm") Reset            
