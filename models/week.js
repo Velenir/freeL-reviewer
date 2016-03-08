@@ -4,6 +4,26 @@ var Schema = mongoose.Schema;
 if(!requiredTimes) var requiredTimes = 0;
 console.log('requiredTimes:', ++requiredTimes);
 
+function URL(key, options) {
+  mongoose.SchemaType.call(this, key, options, 'URL');
+}
+URL.prototype = Object.create(mongoose.SchemaType.prototype);
+
+// `cast()` takes a parameter that can be anything. You need to
+// validate the provided `val` and throw a `CastError` if you
+// can't convert it.
+URL.prototype.cast = function(val) {
+
+    if(!/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/.test(val)) throw new mongoose.SchemaType.CastError('URL', val + ' is not a valid URL');
+    console.log('casting URL:', val);
+
+    return val;
+};
+
+// Don't forget to add `URL` to the type registry
+mongoose.Schema.Types.URL = URL;
+
+
 function updateSubmissions(revN) {
     console.log("This VAL in setter:", this);
     console.log('revN =', revN);
@@ -15,8 +35,10 @@ function updateSubmissions(revN) {
 var Week = new Schema({
     number: {type: Number, required: true},
     tasks: [{title: String, helpText: String, criteria: [String]}],
-    posts: {type: Number, default: 0},  //remove field?
-    toReview: {type: Number, default: 0},   //remove field? and insteand get via Submission.count()
+    topic: {type: String, required: true, trim: true},
+    url: {type: URL, required: true, trim: true},
+    posts: {type: Number, default: 0},  // TODO remove field?
+    toReview: {type: Number, default: 0},   // TODO remove field? and instead get via Submission.count()
     course: {type: Number, ref: 'Course', required: true},
     reviewsRequired: {type: Number, default: 3, set: updateSubmissions},
     submissions: [{type: Schema.Types.ObjectId, ref: 'Submission'}]

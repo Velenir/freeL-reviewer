@@ -7,13 +7,12 @@ block main
         block assignmentHeader
           .clearfix
             h2.assignment-header
-              //- small Week #{weekN} assignment: 
+              //- small Week #{week.weekN} assignment: 
               //- | Exploring Ionic Framework
               //- small , available at 
               //- TODO:0 get url and topic from db
-              a(href="https://www.coursera.org/learn/hybrid-mobile-development/peer/VsOf7/exploring-ionic-framework" title="at Coursera") Exploring Ionic Framework
+              a(href=week.url title="at Coursera")= week.topic
             block assignmentHeaderRight
-            //- h1.review-others-link: small: a(href="review") Review others
 
               
       block assignmentBody            

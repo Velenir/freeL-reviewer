@@ -20,8 +20,7 @@ block prepend panelBody
         
               
   include ./mixins/taskPanels.jade
-  //- - var reviews = [{scores:[[1,1,0],[0,0],[1,0]]}, {scores:[[0,1,0],[1,1],[1,0]]}, {scores:[[1,1,0],[0,0],[1,0]]}, {scores:[[1,1,0],[1,0],[1,0]]}]
-  +taskPanels(tasks)
+  +taskPanels(week.tasks)
   
 block form  
   form#submissionForm(action="/addreview", method="post")

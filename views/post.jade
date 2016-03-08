@@ -8,7 +8,7 @@ block append assignmentHeader
   - var subValid = Boolean(submission)
   
   if subValid && !submission.isReviewed
-    .alert.alert-success(role='alert') To share this submission you can use #[a.alert-link(href='/course/#{course}/week#{weekN}/review?sub=#{submission._id}') this] link.
+    .alert.alert-success(role='alert') To share this submission you can use #[a.alert-link(href='review?sub=#{submission._id}') this] link.
 
 block assignmentHeaderRight
   if submission
@@ -35,7 +35,7 @@ block panelBody
     #collapseTwo.panel-collapse.collapse.in
       //- reviewed tasks with scores
       include ./mixins/taskPanels.jade
-      +taskPanels(tasks, submission.reviews)
+      +taskPanels(week.tasks, submission.reviews)
       
       if submission.reviews.some(function(el){return Boolean(el.comment);})
         
