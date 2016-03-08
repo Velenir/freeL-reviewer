@@ -153,17 +153,21 @@ router.post('/register', function(req, res) {
   Account.register(new Account({
     username: req.body.username
   }), req.body.password, function(err, account) {
+    var redirectedFrom = req.body.redirectedFrom;
+
     if (err) {
       console.log("Register Error: " + err);
-      return res.render(req.body.redirectedFrom ? "login_register" : "register", {
-        registerInfo: err
-      });
+      // return res.render(req.body.redirectedFrom ? "login_register" : "register", {
+      //   registerInfo: err
+      // });
+      if(redirectedFrom) return res.render('login_register', {registerInfo: err, redirectedFrom: redirectedFrom});
+      else return res.render('register', {registerInfo: err});
     }
 
     passport.authenticate('local')(req, res, function() {
-      if (req.body.redirectedFrom)
+      if (redirectedFrom)
       // redirect back from whence user came
-        res.redirect(req.body.redirectedFrom);
+        res.redirect(redirectedFrom);
       else
         res.redirect('/');
     });
@@ -174,10 +178,7 @@ router.post('/register', function(req, res) {
 
 // Get Login page
 router.get('/login', function(req, res) {
-  res.render('login', {
-    user: req.user,
-    info: 'An error'
-  });
+  res.render('login', {});
 });
 
 // On Login form submission
@@ -189,12 +190,17 @@ router.post('/login', function(req, res, next) {
       console.log("Login Error");
       return next(err);
     }
+
+    var redirectedFrom = req.body.redirectedFrom;
+
     //  if authentication failed
     if (!user) {
       console.log("User null; " + info);
-      return res.render(req.body.redirectedFrom ? "login_register" : 'login', {
-        loginInfo: info
-      });
+      if(redirectedFrom) return res.render('login_register', {loginInfo: info, redirectedFrom: redirectedFrom});
+      else return res.render('login', {loginInfo: info});
+      // return res.render(req.body.redirectedFrom ? "login_register" : 'login', {
+      //   loginInfo: info
+      // });
     }
     //  if authentication succeeded establish a user session
     req.logIn(user, function(err) {
@@ -202,7 +208,7 @@ router.post('/login', function(req, res, next) {
         return next(err);
       }
       // redirect back from whence user came
-      if (req.body.redirectedFrom) return res.redirect(req.body.redirectedFrom);
+      if (redirectedFrom) return res.redirect(redirectedFrom);
 
       return res.redirect('/');
       //   return res.redirect('/users/' + user.username);
@@ -225,11 +231,10 @@ router.get('/login_register', function(req, res) {
   var redirectedFrom = req.session.redirectedFrom;
 
   // need to unset session fields before render, because session.save() is called on HTTP request
+  // otherwise user will be redirected even if route is accessed directly
   req.session.redirectedFrom = undefined;
   res.render('login_register', {
-    redirectedFrom: redirectedFrom,
-    loginInfo: "Some important info",
-    registerInfo: "Equally important info"
+    redirectedFrom: redirectedFrom
   });
 
 

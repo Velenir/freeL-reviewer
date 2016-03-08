@@ -3,9 +3,9 @@ mixin logregForm(action, info)
     block
   form(role='form', action=action, method="post", style='margin:0 auto; max-width: 300px;')
     .form-group
-        input.form-control(type='text', name="username", placeholder='Enter Username', autofocus!=attributes.autofocus)
+        input.form-control(type='text', name="username", placeholder='Enter Username', autofocus!=attributes.autofocus, required)
     .form-group
-      input.form-control(type='password', name="password", placeholder='Password')
+      input.form-control(type='password', name="password", placeholder='Password', required)
     button.btn.btn-default.pull-left(type='submit') Submit 
     a.btn.btn-primary.pull-right(href='/', role="button") Cancel
     
