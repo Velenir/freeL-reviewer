@@ -80,7 +80,7 @@ mongoose.connection.on('disconnected', function () {
   console.log('Mongoose default connection disconnected');
 });
 
-// TODO:20 remove later
+// TODO:30 remove later
 // app.use(function(req, res, next){
 //   console.log('SESSION:', req.session);
 // });

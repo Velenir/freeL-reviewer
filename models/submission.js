@@ -93,11 +93,26 @@ Submission.statics.updateReviewedStates = function (courseId, weekN) {
   });
 };
 
-// inserts or updates Submission with {course: currentWeek.course, 'week.number': currentWeek.weekN} (unique index)
+// inserts or updates Submission with {course: week.course, 'week.number': week.weekN} (unique index)
 // also resets isReviewed and reviews
-Submission.statics.upsertSub = function (userId, username, currentWeek, formBody, cb) {
-  return this.findOneAndUpdate({'user.userId': userId, course: currentWeek.course, 'week.number': currentWeek.weekN}, {'week.obj': currentWeek.id, title: formBody.title, submission: formBody.submission, userComment: formBody.comments, reviewsRequired: currentWeek.reviewsRequired, isReviewed: false, reviews: [], $setOnInsert: {'user.username': username}}, {new: true, upsert: true}, cb);
+Submission.statics.upsertSub = function (userId, username, week, formBody, cb) {
+  return this.findOneAndUpdate({'user.userId': userId, course: week.course, 'week.number': week.weekN}, {'week.obj': week.weekId, title: formBody.title, submission: formBody.submission, userComment: formBody.comments, reviewsRequired: week.reviewsRequired, isReviewed: false, reviews: [], $setOnInsert: {'user.username': username}}, {new: true, upsert: true}, cb);
 };
+
+Submission.statics.addSub = function (userId, username, week, formBody, cb) {
+
+  // remove old submission if there is one
+  // removal is better than updating existing because other users keep track of old submission in their hasReviewed
+  var removalPromise = this.remove({'user.userId': userId, course: week.course, 'week.number': week.weekN}).exec();
+
+  // this is actually a Model, so new this({}) works correctly
+  var sub = new this({course: week.course, week: {number: week.weekN, obj: week.weekId}, user: {userId: userId, username: username}, title: formBody.title, submission: formBody.submission, userComment: formBody.comments, reviewsRequired: week.reviewsRequired, isReviewed: false});
+
+  return removalPromise.then(function () {
+    return sub.save();
+  }).onResolve(cb);
+};
+
 
 // updates Submission with a new review
 Submission.statics.addReview = function (subId, author, reviewBody, cb) {
@@ -111,7 +126,7 @@ Submission.statics.addReview = function (subId, author, reviewBody, cb) {
 };
 
 Submission.pre('save', function(next) {
-  console.log('SAVING Submission:', this);
+  // console.log('SAVING Submission:', this);
   // if reviewsRequired already set, skip resetting
   if(this.reviewsRequired !== undefined) {
     this.updatedReviewed();
@@ -133,8 +148,8 @@ Submission.pre('save', function(next) {
 });
 
 Submission.post('save', function(doc){
-  console.log("SAVED Submission", doc);
-  console.log("This value:", this);
+  // console.log("SAVED Submission", doc);
+  // console.log("This value:", this);
   mongoose.model('Week').update({_id: doc.week.obj}, {$addToSet: {submissions: doc._id}}, function(err, raw){
     if (err) return console.log('Week Update Error', err);
     console.log('The raw response from Mongo was ', raw);
@@ -142,7 +157,7 @@ Submission.post('save', function(doc){
 });
 
 Submission.post('findOneAndUpdate', function(doc){
-  console.log("Found and Updated Submission", doc);
+  // console.log("Found and Updated Submission", doc);
   // console.log("UPSERTED:", doc.upserted);
   // console.log("This value conditions:", this._conditions);
   mongoose.model('Week').update({_id: doc.week.obj}, {$addToSet: {submissions: doc._id}}, function(err, raw){

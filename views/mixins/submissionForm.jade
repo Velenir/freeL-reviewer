@@ -12,3 +12,6 @@ mixin submissionForm
       label(for='comments') Comments:                  
       textarea#comments.form-control(name="comments", rows="5", readonly=subValid)= submission.userComment
       p.help-block Any comments or instructions you would like to leave for reviewers.
+    
+    input(type="hidden", name="hk", value=hashedKey)
+    

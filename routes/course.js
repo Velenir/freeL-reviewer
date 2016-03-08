@@ -1,10 +1,11 @@
 var express = require('express');
 var router = express.Router();
 
-var Promise = require("bluebird");
 
 var Week = require('../models/week');
 var Submission = require('../models/submission');
+
+var hash = require('object-hash');
 
 // if not logged in go to '/login_register'
 function requireAuthorization(req, res, next) {
@@ -21,6 +22,26 @@ function requireAuthorization(req, res, next) {
   res.redirect('/login_register');
 
   // res.render('login_register', {ops :{redirectedFrom: req.baseUrl + req.originalUrl, requrl: req.url, originalUrl: req.originalUrl, baseUrl: req.baseUrl, reqPath: req.path}, info: "Some Info"});
+}
+
+
+function addHashedData(session, data) {
+  if(!session.hashedData) {
+    session.hashedData = {};
+  }
+
+  // console.log('hashing', data);
+  var hashedKey = hash(data);
+  session.hashedData[hashedKey] = data;
+  return hashedKey;
+}
+
+function addSubToHashedData(session, sub) {
+  return addHashedData(session, {subId: sub._id.toString(), course: sub.course, weekN: sub.week.number});
+}
+
+function addWeekToHashedData(session, currentWeek) {
+  return addHashedData(session, {weekId: currentWeek.id.toString(), course: currentWeek.course, weekN: currentWeek.weekN, reviewsRequired: currentWeek.reviewsRequired});
 }
 
 /* GET courses listing */
@@ -156,12 +177,14 @@ router.get('/:id/week:n/post', function(req, res, next) {
   // console.log('calculatedReviewed:', req.submission.calculatedReviewed);
   var sub = req.submission;
 
+  var hashedKey = addWeekToHashedData(req.session, req.session.currentWeek);
+
   // NOTE sub.updatedReviewed gets undefined after JSON.stringify() of on req.session save
-  res.render('post', { title: sub ? Submission.schema.methods.updatedReviewed.call(sub) ? 'Your assignment has been reviewed' : 'Edit your assignment' : 'Submit your assignment', course: req.params.id, weekN: req.params.n, user: req.user, submission: sub, tasks: req.session.currentWeek.tasks});
+  res.render('post', { title: sub ? Submission.schema.methods.updatedReviewed.call(sub) ? 'Your assignment has been reviewed' : 'Edit your assignment' : 'Submit your assignment', course: req.params.id, weekN: req.params.n, user: req.user, submission: sub, tasks: req.session.currentWeek.tasks, hashedKey: hashedKey});
 });
 
 // GET edit assignment page
-// TODO:30 remove this route
+// TODO:40 remove this route
 router.get('/:id/week:n/edit', function(req, res, next) {
   res.render('post', { title: 'Edit your assignment', week: req.params.n, editing: true, user: req.user });
 });
@@ -169,6 +192,8 @@ router.get('/:id/week:n/edit', function(req, res, next) {
 // GET just submitted submission overview page
 router.get('/:id/week:n/review', function(req, res, next) {
   if(req.query.sub){
+    console.log('STAGE 0');
+
     Submission.findById(req.query.sub).populate({path: 'week.obj', select: '-submissions -toReview -posts', model: 'Week'}).exec(function (err, sub) {
       if(err) return next(err);
 
@@ -194,22 +219,26 @@ router.get('/:id/week:n/review', function(req, res, next) {
 
       // WARNING don't set req.session.reviewingSub here; it should be only applicable to normal /review submissions
       console.log('going to sub._id:', req.params.subid);
-      res.render('review', { title: 'Review assignment', course: req.params.id, weekN: req.params.n, user: req.user, submission: sub, tasks: week.tasks});
+
+      var hashedKey = addSubToHashedData(req.session, sub);
+      res.render('review', { title: 'Review assignment', course: req.params.id, weekN: req.params.n, user: req.user, submission: sub, tasks: week.tasks, hashedKey: hashedKey});
     });
     return;
   }
   next();
-}, //TODO:10 get previous route's currentWeek population into a function and here
+}, //TODO:20 get previous route's currentWeek population into a function and here
 function(req, res, next) {
   var currentWeek = req.session.currentWeek;
   // if currentWeek already filled with id and is the same skip reassigning
   // provided we can rely on weeks collection having unique {course, number} fileds
   if(currentWeek && currentWeek.course == req.params.id && currentWeek.weekN == req.params.n && currentWeek.id && currentWeek.tasks){
     // reviewingSub is available so that user doesn't change revieing submission on simple reload
-
+    console.log('STAGE 1.1');
 
     return next();
   }
+
+  console.log('STAGE 1.2');
 
   var condition = (currentWeek && currentWeek.id) ? {_id : currentWeek.id} : {course: req.params.id, number: req.params.n};
 
@@ -234,6 +263,7 @@ function(req, res, next) {
 function (req,res, next) {
   var reviewingSub = req.session.reviewingSub, currentWeek = req.session.currentWeek;
   if(reviewingSub && reviewingSub.course == req.params.id && reviewingSub.week.number == req.params.n && reviewingSub.week.obj.toString() === currentWeek.id.toString()) {
+    console.log('STAGE 2.1');
 
     return next();
   } else {
@@ -242,6 +272,9 @@ function (req,res, next) {
       if(req.user.submissions) subsNotForReview = subsNotForReview.concat(req.user.submissions);
       if(req.user.hasReviewed) subsNotForReview = subsNotForReview.concat(req.user.hasReviewed);
     }
+
+    console.log('STAGE 2.2');
+    console.log('notForReview', subsNotForReview);
 
     Submission.aggregate([
       {"$match" : {"course": +req.params.id, 'week.number': +req.params.n, "isReviewed": false, "_id": {"$nin": subsNotForReview}}},
@@ -266,8 +299,13 @@ function (req,res, next) {
 function (req, res) {
 
   var sub = req.session.reviewingSub;
+
   if(sub) {
-    res.render('review', { title: 'Review assignment', course: req.params.id, weekN: req.params.n, user: req.user, submission: req.session.reviewingSub, tasks: req.session.currentWeek.tasks});
+    console.log('STAGE 3');
+
+    var hashedKey = addSubToHashedData(req.session, sub);
+
+    res.render('review', { title: 'Review assignment', course: req.params.id, weekN: req.params.n, user: req.user, submission: req.session.reviewingSub, tasks: req.session.currentWeek.tasks, hashedKey: hashedKey});
   } else{
     // DONE:10 create nothingtoreview.jade view
     res.render('nothingtoreview', {user: req.user});

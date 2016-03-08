@@ -36,6 +36,16 @@ function alreadyLoggedIn(req, res, next) {
   next();
 }
 
+function takeHashedData(session, hashedKey) {
+  if(!session.hashedData) return undefined;
+
+  var data = session.hashedData[hashedKey];
+  session.hashedData[hashedKey] = undefined;
+
+  console.log('Got', data, 'for hashedKey', hashedKey);
+
+  return data;
+}
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -238,7 +248,14 @@ router.post('/addsubmission', function(req, res, next) {
     return next(new Error('No currentWeek in user session'));
   }
 
-  Submission.upsertSub(req.user._id, req.user.username, currentWeek, req.body, function(err, doc) {
+  // DONE:20 get course and weekN from hashedData, not currentWeek
+  var week = takeHashedData(req.session, req.body.hk);
+  if (!week) {
+    console.log('No corresponding week in user session');
+    return next(new Error('No corresponding week in user session'));
+  }
+
+  Submission.addSub(req.user._id, req.user.username, week, req.body, function(err, doc) {
     if (err) return next(err);
 
     currentWeek.mySub = doc;
@@ -276,12 +293,13 @@ router.post('/addreview', function(req, res, next) {
 
   console.log(req.body);
 
-  var subId = req.session.reviewingSub._id;
+  // DONE:30 get submission based on req.body key from req.session.reviewingSubs object
+  var sub = takeHashedData(req.session, req.body.hk);
   // reset reviewed sub
   req.session.reviewingSub = undefined;
   var author = {id: req.user._id, username: req.user.username};
 
-  Submission.addReview(subId, author, req.body, function (err, doc) {
+  Submission.addReview(sub.subId, author, req.body, function (err, doc) {
     if(err) {
       console.log('Error adding review:', err);
       return next(err);
@@ -294,8 +312,9 @@ router.post('/addreview', function(req, res, next) {
         return next(err);
       }
 
-      res.json(doc);
-      // res.redirect('/course/' + currentWeek.course + '/week' + currentWeek.weekN + '/post');
+      // res.json(doc);
+      // NOTE redirect works properly with doc.course
+      res.redirect('/course/' + doc.course + '/week' + doc.week.number + '/review');
     });
   });
 
