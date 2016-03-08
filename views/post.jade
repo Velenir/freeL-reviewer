@@ -7,7 +7,7 @@ block append assignmentHeader
     - submission = false
   - var subValid = Boolean(submission)
   
-  if subValid
+  if subValid && !submission.isReviewed
     .alert.alert-success(role='alert') To share this submission you can use #[a.alert-link(href='/course/#{course}/week#{weekN}/review?sub=#{submission._id}') this] link.
 
 block assignmentHeaderRight

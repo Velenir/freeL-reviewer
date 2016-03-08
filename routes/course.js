@@ -62,52 +62,7 @@ router.get('/:id/week:n', function(req, res, next) {
   res.send('respond with a Week ' + req.params.n +' resource');
 });
 
-//                      method param uses /(?:post|edit) custom expression to capture; default would have been ([^\/]+)
-// router.get('/:id/week:n/:method(?:post|edit)', function(req, res ,next){
-//   console.log("path-to-reg");
-//
-//   console.log("Caught params: id %d, n %d", req.params.id, req.params.n);
-//   console.log(req.params);
-//
-//   var currentWeek = req.session.currentWeek;
-//   // if currentWeek already filled with id and is the same skip reassigning
-//   // provided we can rely on weeks collection having unique {course, number} fileds
-//   if(currentWeek && currentWeek.course == req.params.id && currentWeek.weekN == req.params.n && currentWeek.id)
-//     return next();
-//
-//   Week.findOne({course: req.params.id, number: req.params.n}, '_id submissions').populate({path: 'submissions', match: {'user.userId': req.user._id}}).exec(function(err, week){
-//     if(err) {
-//       console.log('Error getting week:',err);
-//       return res.status(406).send('Error getting week:',err);
-//     }
-//
-//     if(!week) {
-//       console.log('No week found');
-//       return res.status(406).send('No such week');
-//     }
-//     console.log('Populated week:', week);
-//     // inject week data into req.session to make use of in post form call
-//     req.session.currentWeek = {id: week._id, course: week.course, weekN: week.number, reviewsRequired: week.reviewsRequired};
-//
-//     next();
-//   });
-//   // next();
-// });
 
-//        req.params == regex.exec(url).slice(1)    matches get fed to req.params with 0, 1, 2... for keys
-// router.get(/^\/([^\\/]+?)\/week([^\\/]+?)\/(?:post|edit)(?:\/(?=$))?$/i, function(req, rs ,next){
-//
-//   console.log("Caught params: id %d, n %d", req.params[0], req.params[1]);
-//   console.log(req.params);
-//   next();
-//
-//
-// });
-
-// router.param('id', function(req, res, next, id){
-//   console.log('ONE param: id %d', id);
-//   next();
-// });
 
 // GET post assignment page
 router.get('/:id/week:n/post', function(req, res, next) {
@@ -141,9 +96,10 @@ router.get('/:id/week:n/post', function(req, res, next) {
     return;
   }
 
-  var condition = currentWeek && currentWeek.id ? {_id : currentWeek.id} : {course: req.params.id, number: req.params.n};
+  var condition = {course: req.params.id, number: req.params.n};
 
   console.log('STAGE 1.7');
+  console.log('looking for week with', condition);
 
   Week.findOne(condition).populate({path: 'submissions', match: {'user.userId': req.user._id}}).exec(function(err, week){
     if(err) {
@@ -183,18 +139,31 @@ router.get('/:id/week:n/post', function(req, res, next) {
   res.render('post', { title: sub ? Submission.schema.methods.updatedReviewed.call(sub) ? 'Your assignment has been reviewed' : 'Edit your assignment' : 'Submit your assignment', course: req.params.id, weekN: req.params.n, user: req.user, submission: sub, tasks: req.session.currentWeek.tasks, hashedKey: hashedKey});
 });
 
-// GET edit assignment page
-// TODO:40 remove this route
-router.get('/:id/week:n/edit', function(req, res, next) {
-  res.render('post', { title: 'Edit your assignment', week: req.params.n, editing: true, user: req.user });
-});
 
 // GET just submitted submission overview page
 router.get('/:id/week:n/review', function(req, res, next) {
+  // Check that the user has already made a submission for this week,
+  // otherwise don't allow to see others' submissions
+  console.log('STAGE PRE_REVIEW');
+  Submission.findOne({course: +req.params.id, 'week.number': +req.params.n, 'user.userId': req.user._id}, '_id', function (err, sub) {
+    if(err) return next(err);
+
+    // if user doesn't have a previous submission for this course and week
+    if(!sub) {
+      return res.render('nothingtoreview', {user: req.user, reason: 'HAS YET TO SUBMIT'});
+    }
+    // otherwise proceed
+    next();
+  });
+
+},
+
+function(req, res, next) {
   if(req.query.sub){
     console.log('STAGE 0');
 
-    Submission.findById(req.query.sub).populate({path: 'week.obj', select: '-submissions -toReview -posts', model: 'Week'}).exec(function (err, sub) {
+    // submission with given _id must belong to a proper week and course from the url
+    Submission.findOne({_id: req.query.sub, course: +req.params.id, 'week.number': +req.params.n}).populate({path: 'week.obj', select: '-submissions -toReview -posts', model: 'Week'}).exec(function (err, sub) {
       if(err) return next(err);
 
       if(!sub) return next(new Error("No submission found."));
@@ -203,7 +172,7 @@ router.get('/:id/week:n/review', function(req, res, next) {
       // console.log('In /review?sub=  sub:', sub);
       // console.log('sub.week:', sub.week);
       // console.log('sub.week.obj:', sub.week.obj);
-      sub.updatedReviewedFromWeek();
+      var subReviewed = sub.updatedReviewedFromWeek();
 
       var week = sub.week.obj;
       // to skip extra lookup after redirect
@@ -215,6 +184,14 @@ router.get('/:id/week:n/review', function(req, res, next) {
         console.log("passing sub:", sub);
         req.session.currentWeek.mySub = sub;
         return res.redirect(`/course/${week.course}/week${week.number}/post`);
+      }
+
+      // console.log('subid', sub._id, sub.id);
+      // console.log('hasReviewed', req.user.hasReviewed, '\\nfirst el:', req.user.hasReviewed[0]);
+      // console.log('reviewed by user', req.user.hasReviewed.indexOf(sub._id) !== -1);
+
+      if(subReviewed || req.user.hasReviewed.indexOf(sub._id) !== -1) {
+        return res.render('nothingtoreview', {user: req.user, reason: 'ALREADY REVIEWED'});
       }
 
       // WARNING don't set req.session.reviewingSub here; it should be only applicable to normal /review submissions
@@ -308,7 +285,7 @@ function (req, res) {
     res.render('review', { title: 'Review assignment', course: req.params.id, weekN: req.params.n, user: req.user, submission: req.session.reviewingSub, tasks: req.session.currentWeek.tasks, hashedKey: hashedKey});
   } else{
     // DONE:10 create nothingtoreview.jade view
-    res.render('nothingtoreview', {user: req.user});
+    res.render('nothingtoreview', {user: req.user, reason: 'NO SUBMISSIONS FOUND'});
   }
 });
 

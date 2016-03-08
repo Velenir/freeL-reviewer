@@ -54,7 +54,7 @@ Week.post('save', function(result){
 
 Week.post('findOne', function(result){
     console.log('Week was found:', result);
-    console.log('contains revModified', result.revModified);
+    // console.log('contains revModified', result.revModified);
 });
 
 

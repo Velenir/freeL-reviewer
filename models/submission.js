@@ -86,8 +86,10 @@ Submission.statics.updateReviewedStates = function (courseId, weekN) {
 
     var revN = week.reviewsRequired;
     // revN should always be >0, but just in case we'll need submissions not up for review
-    var revField = revN > 0 ? 'reviews.'+(revN-1) : 'reviews';
-    return self.update({course: week.course, 'week.number': week.number, [revField]: {$exists: true}}, {isReviewed: true, reviewsRequired: revN}, {multi: true}).exec()
+    var condition = {course: week.course, 'week.number': week.number};
+    if(revN > 0) condition['reviews.'+(revN-1)] = {$exists: true};
+
+    return self.update(condition, {isReviewed: true, reviewsRequired: revN}, {multi: true}).exec()
   }).catch(function(err){
     console.log('Error updating ReviewdStates:', err);
   });

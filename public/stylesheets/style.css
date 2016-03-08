@@ -108,7 +108,7 @@ form .alert {
     border-color: #bce8f1;
 }
 
-#assignment .panel-heading[data-toggle="collapse"] {
+#assignment div.panel-heading[data-toggle="collapse"] {
   color: #fff;
   background-color: #337ab7;
   margin: 0 -3px;
@@ -118,6 +118,11 @@ form .alert {
 
 .assignment-header {
   float: left;
+}
+
+.assignment-header:only-child {
+  float: none;
+  text-align: center;
 }
 
 .review-others-link {

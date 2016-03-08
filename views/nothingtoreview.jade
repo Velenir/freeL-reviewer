@@ -3,5 +3,14 @@ extends assignment
 
 block assignmentBody
   //- center title or add something
-  h2.text-center No submissions left to review
+  h2.text-center
+    case reason
+      when 'NO SUBMISSIONS FOUND'
+        | No submissions left to review
+      when 'HAS YET TO SUBMIT'
+        | Submit your assignment #[a(href="post") here] first
+      when 'ALREADY REVIEWED'
+        | Submission has already been reviewed
+      default
+        | Nothing to review
   
