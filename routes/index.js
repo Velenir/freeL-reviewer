@@ -150,10 +150,24 @@ router.get('/register', function(req, res) {
 
 // On Register form submission
 router.post('/register', function(req, res) {
+  var redirectedFrom = req.body.redirectedFrom;
+
+  // NOTE passportjs doesn't save password field, only hash,
+  // so it doesn't respect minlength in mongoose scheme for password field
+  // solution -- manual check (or custom Strategy)
+  var passMinLength;
+  if(req.body.password && (passMinLength = Account.schema.path('password').options.minlength) && (req.body.password.length < passMinLength)) {
+    var error = new Error(`Password is shorter than the minimum allowed length (${passMinLength})`);
+    error.name = 'ValidationError';
+    console.log("Register Error: " + error);
+
+    if(redirectedFrom) return res.render('login_register', {registerInfo: error, redirectedFrom: redirectedFrom});
+    else return res.render('register', {registerInfo: error});
+  }
+
   Account.register(new Account({
     username: req.body.username
   }), req.body.password, function(err, account) {
-    var redirectedFrom = req.body.redirectedFrom;
 
     if (err) {
       console.log("Register Error: " + err);
