@@ -152,21 +152,6 @@ router.get('/register', function(req, res) {
 router.post('/register', function(req, res) {
   var redirectedFrom = req.body.redirectedFrom;
 
-  // NOTE passportjs doesn't save password field, only hash,
-  // so it doesn't respect minlength (or anything else for that matter) in mongoose scheme for password field
-  // solution -- manual check (or custom Strategy)
-
-  var password = req.body.password;
-  // console.log('shemaType options:', Account.schema.path('password').options);
-  var error = Account.schema.path('password').doValidateSync(password);
-  if(error) {
-    console.log("Register Error: " + error);
-    var message = error.message.replace("(`" + password + "`)", '');
-
-    if(redirectedFrom) return res.render('login_register', {registerInfo: message, redirectedFrom: redirectedFrom});
-    else return res.render('register', {registerInfo: message});
-  }
-
   Account.register(new Account({
     username: req.body.username
   }), req.body.password, function(err, account) {
