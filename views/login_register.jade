@@ -10,6 +10,6 @@ block main
           h1 Login Form
           p.lead If you have an account
       .col-xs-12.col-sm-6
-        +logregForm('/register', registerInfo)
+        +logregForm('/register', registerInfo)(minlength=7)
           h1 Register Form
           p.lead If you don't have an account

@@ -153,16 +153,18 @@ router.post('/register', function(req, res) {
   var redirectedFrom = req.body.redirectedFrom;
 
   // NOTE passportjs doesn't save password field, only hash,
-  // so it doesn't respect minlength in mongoose scheme for password field
+  // so it doesn't respect minlength (or anything else for that matter) in mongoose scheme for password field
   // solution -- manual check (or custom Strategy)
-  var passMinLength;
-  if(req.body.password && (passMinLength = Account.schema.path('password').options.minlength) && (req.body.password.length < passMinLength)) {
-    var error = new Error(`Password is shorter than the minimum allowed length (${passMinLength})`);
-    error.name = 'ValidationError';
-    console.log("Register Error: " + error);
 
-    if(redirectedFrom) return res.render('login_register', {registerInfo: error, redirectedFrom: redirectedFrom});
-    else return res.render('register', {registerInfo: error});
+  var password = req.body.password;
+  // console.log('shemaType options:', Account.schema.path('password').options);
+  var error = Account.schema.path('password').doValidateSync(password);
+  if(error) {
+    console.log("Register Error: " + error);
+    var message = error.message.replace("(`" + password + "`)", '');
+
+    if(redirectedFrom) return res.render('login_register', {registerInfo: message, redirectedFrom: redirectedFrom});
+    else return res.render('register', {registerInfo: message});
   }
 
   Account.register(new Account({
@@ -174,8 +176,8 @@ router.post('/register', function(req, res) {
       // return res.render(req.body.redirectedFrom ? "login_register" : "register", {
       //   registerInfo: err
       // });
-      if(redirectedFrom) return res.render('login_register', {registerInfo: err, redirectedFrom: redirectedFrom});
-      else return res.render('register', {registerInfo: err});
+      if(redirectedFrom) return res.render('login_register', {registerInfo: err.message, redirectedFrom: redirectedFrom});
+      else return res.render('register', {registerInfo: err.message});
     }
 
     passport.authenticate('local')(req, res, function() {
@@ -210,8 +212,9 @@ router.post('/login', function(req, res, next) {
     //  if authentication failed
     if (!user) {
       console.log("User null; " + info);
+      console.log(info);
       if(redirectedFrom) return res.render('login_register', {loginInfo: info, redirectedFrom: redirectedFrom});
-      else return res.render('login', {loginInfo: info});
+      else return res.render('login', {loginInfo: info.message});
       // return res.render(req.body.redirectedFrom ? "login_register" : 'login', {
       //   loginInfo: info
       // });

@@ -5,7 +5,8 @@ mixin logregForm(action, info)
     .form-group
         input.form-control(type='text', name="username", placeholder='Enter Username', autofocus!=attributes.autofocus, required)
     .form-group
-      input.form-control(type='password', name="password", placeholder='Password', required)
+      - attributes['autofocus'] = undefined
+      input.form-control(type='password', name="password", placeholder='Password', required)&attributes(attributes)
     button.btn.btn-default.pull-left(type='submit') Submit 
     a.btn.btn-primary.pull-right(href='/', role="button") Cancel
     
