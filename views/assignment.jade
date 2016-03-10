@@ -8,9 +8,6 @@ block main
           .clearfix
             h2.assignment-header
               //- small Week #{week.weekN} assignment: 
-              //- | Exploring Ionic Framework
-              //- small , available at 
-              //- TODO:0 get url and topic from db
               a(href=week.url title="at Coursera")= week.topic
             block assignmentHeaderRight
 
@@ -28,5 +25,5 @@ block main
             .panel-footer.clearfix
               block formFooter
                 .btn-group.btn-group-lg.pull-right(role='group')
-                  button.btn.btn-primary(type='submit', form="submissionForm") Submit
-                  button.btn.btn-warning(type='reset', form="submissionForm") Reset            
+                  button.btn.btn-primary(type='submit', form="submissionForm", disabled=editing) Submit
+                  button.btn.btn-warning(type='reset', form="submissionForm", disabled=editing) Reset            

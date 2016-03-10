@@ -39,36 +39,7 @@ Course.statics.getCourseWithWeeks = function (courseId, arg1, arg2) {
 
 var CourseModel = mongoose.model('Course', Course);
 
-// try to insert some courses
-// setTimeout(function(argument){
-//     var c1 = new CourseModel({name: "NEW COURSE1"});
-//     c1.save(function(err){
-//         console.log("Saving Error:", err);
-//     });
-//
-//     var c2 = new CourseModel({name: "NEW COURSE2"});
-//     c2.save(function(err){
-//         console.log("Saving Error:", err);
-//     });
-//
-//     var c3 = new CourseModel({name: "NEW COURSE3"});
-//     c3.save(function(err){
-//         console.log("Saving Error:", err);
-//     });
-//
-//     // CourseModel.update({_id: 7}, {name: "renamed"}).exec();
-// },1000);
-
 
 module.exports = CourseModel;
-
-// can also assign count to _id like this
-// Course.pre('save', function(next) {
-//     this.model('Course').count({}, function(err, count){
-//         this._id = count;
-//     });
-//     // or
-//     this._id = total++;
-// });
 
 // module.exports = mongoose.model('Course', Course);

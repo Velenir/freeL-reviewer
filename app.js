@@ -59,12 +59,12 @@ passport.deserializeUser(Account.deserializeUser());
 mongoose.connect('mongodb://localhost/passport_local_mongoose_express4', function(err){
   if(err) console.log('Connection erro:', err);
 });
-mongoose.connection.once('open', function(){
-  console.log('Opened Connection');
-  Account.find({}, function(err, users){
-    console.log('USERS:', users);
-  });
-});
+// mongoose.connection.once('open', function(){
+//   console.log('Opened Connection');
+//   Account.find({}, function(err, users){
+//     console.log('USERS:', users);
+//   });
+// });
 
 // CONNECTION EVENTS
 // When successfully connected
@@ -86,7 +86,7 @@ mongoose.connection.on('disconnected', function () {
 // app.use(function(req, res, next){
 //   console.log('SESSION:', req.session);
 // });
-// --TODO
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

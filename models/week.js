@@ -37,8 +37,6 @@ var Week = new Schema({
     tasks: [{title: String, helpText: String, criteria: [String]}],
     topic: {type: String, required: true, trim: true},
     url: {type: URL, required: true, trim: true},
-    posts: {type: Number, default: 0},  // TODO remove field?
-    toReview: {type: Number, default: 0},   // TODO remove field? and instead get via Submission.count()
     course: {type: Number, ref: 'Course', required: true},
     reviewsRequired: {type: Number, default: 3, set: updateSubmissions},
     submissions: [{type: Schema.Types.ObjectId, ref: 'Submission'}]
@@ -62,9 +60,9 @@ Week.methods.updateSubRevs = function (cb) {
 Week.post('save', function(result){
     if(!this.revModified) return;
 
-    console.log('RESULT:', result);
-    console.log('THIS:', this);
-    console.log('SAME:', result===this);    //true
+    // console.log('RESULT:', result);
+    // console.log('THIS:', this);
+    // console.log('SAME:', result===this);    //true
 
     this.updateSubRevs();
 });
@@ -74,27 +72,9 @@ Week.post('save', function(result){
 //     console.log('contains revModified', result.revModified);
 // });
 
-Week.post('findOne', function(result){
-    console.log('Week was found:', result);
-    // console.log('contains revModified', result.revModified);
-});
+// Week.post('findOne', function(result){
+//     console.log('Week was found:', result);
+// });
 
 
-// mongoose.connection.once('open', function () {
-//     WScheme.findOne({}, '-submissions', function (err, res) {
-//         console.log('FOUND', res);
-//     });
-// });
-var WScheme = mongoose.model('Week', Week);
-// var w1 = new WScheme({number: 3, course: 7, reviewsRequired: 5, submissions: ["56c2306160a6232a1cc74dc4"]});
-// w1.reviewsRequired = 6;
-// w1.save(function(err){
-//     console.log("Saving Error:", err);
-// });
-//
-// // var w2 = new WScheme({number:78, course: 7, submissions: ["56c37097b050c0cb26a03499"]});
-// // w2.reviewsRequired = 1;
-//
-//
-module.exports = WScheme;
-// module.exports = mongoose.model('Week', Week);
+module.exports = mongoose.model('Week', Week);

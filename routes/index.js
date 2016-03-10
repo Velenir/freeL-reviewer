@@ -9,24 +9,6 @@ var Submission = require('../models/submission');
 
 var router = express.Router();
 
-// // if not logged in go to '/login_register'
-// function requireAuthorization(req, res, next) {
-//   console.log("IN requireAuthorization");
-//   if(req.user){
-//     return next();
-//     console.log("GOING NEXT");
-//   }
-//
-//   console.log("REDIRECTING");
-//   // remember from where was redirected
-//   req.session.redirectedFrom = req.url;
-//   console.log("ORIGINAL URL", req.originalUrl);
-//   console.log("URL", req.url);
-//   res.redirect('/login_register');
-//
-//   // res.render('login_register', {ops :{redirectedFrom: req.baseUrl + req.originalUrl, requrl: req.url, originalUrl: req.originalUrl, baseUrl: req.baseUrl, reqPath: req.path}, info: "Some Info"});
-// }
-
 // if already logged in don't go to /register or /login
 function alreadyLoggedIn(req, res, next) {
   console.log("In ALREADy loggedIn");
@@ -53,18 +35,6 @@ router.get('/', function(req, res, next) {
     console.log('Courses find error:', err);
     throw err;
   });
-
-  // Course.find({}, function (err, courses) {
-  //   if(err) {
-  //     console.log("Courses Error:", err);
-  //     return res.render('index', { user : req.user });
-  //   }
-  //   console.log("courses found:", courses);
-  //   if(courses.length > 0)
-  //     console.log("weeks in 1st course:", courses[0].weeks);
-  //     return res.render('index', { user : req.user, courses: courses });
-  // });
-  //
 
   var subsNotForReview = [];
   if(req.user) {

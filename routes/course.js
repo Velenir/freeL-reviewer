@@ -20,8 +20,6 @@ function requireAuthorization(req, res, next) {
   console.log("ORIGINAL URL", req.originalUrl);
   console.log("URL", req.url);
   res.redirect('/login_register');
-
-  // res.render('login_register', {ops :{redirectedFrom: req.baseUrl + req.originalUrl, requrl: req.url, originalUrl: req.originalUrl, baseUrl: req.baseUrl, reqPath: req.path}, info: "Some Info"});
 }
 
 
@@ -143,7 +141,7 @@ router.get('/:id/week:n/post', function(req, res, next) {
 
   var hashedKey = addWeekToHashedData(req.session, req.session.currentWeek);
 
-  // NOTE sub.updatedReviewed gets undefined after JSON.stringify() of on req.session save
+  // NOTE sub.updatedReviewed gets stripped during JSON.stringify() of on req.session save => load
   res.render('post', { title: sub ? Submission.schema.methods.updatedReviewed.call(sub) ? 'Your assignment has been reviewed' : 'Edit your assignment' : 'Submit your assignment', user: req.user, submission: sub, week: req.session.currentWeek, hashedKey: hashedKey});
 });
 
@@ -188,7 +186,7 @@ function(req, res, next) {
 
       // if same user, don't let him review his assignment
       if(sub.user.userId.toString() === req.user._id.toString()) {
-        console.log('Redirecting to /post', ':: has updatedReviewed method:', sub.updatedReviewed);
+        // console.log('Redirecting to /post', ':: has updatedReviewed method:', sub.updatedReviewed);
         console.log("passing sub:", sub);
         currentWeek.mySub = sub;
         return res.redirect(`/course/${week.course}/week${week.number}/post`);
@@ -211,7 +209,8 @@ function(req, res, next) {
     return;
   }
   next();
-}, //TODO:20 get previous route's currentWeek population into a function and here
+},
+
 function(req, res, next) {
   var currentWeek = req.session.currentWeek;
   // if currentWeek already filled with id and is the same skip reassigning

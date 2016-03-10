@@ -39,9 +39,8 @@ block panelBody
       
       if submission.reviews.some(function(el){return Boolean(el.comment);})
         
-        .panel-body.reviewersComments
+        .panel-body.reviewers-comments
           label Reviewers' comments:
-          br
           each review, index in submission.reviews
             if review.comment
               .form-group.clearfix
@@ -49,10 +48,11 @@ block panelBody
                 .form-control.submission-text= review.comment
 
 block prepend formFooter
+  - var editing = subValid
   if submission
     .btn-group.btn-group-lg.pull-left(role='group')
       button#editBtn.btn.btn-primary() Edit
-    .alert-parent.pull-left(style='overflow: hidden;')
+    .alert-parent.pull-left(style='overflow: hidden; visibility: hidden;')
       .alert.alert-warning(role='alert', style='margin-bottom: 0; padding: 10px;')
         strong Warning!
         |  Resubmitting this assignment would mean losing any reviews it may have received.
@@ -61,12 +61,12 @@ block scripts
   if submission
     script.
       $(document).ready(function() {
-        var $formBtns = $('.panel-footer button[form="submissionForm"]').prop('disabled', true);
+        var $formBtns = $('.panel-footer button[form="submissionForm"]');
 
         var $alertDiv = $('.panel-footer .alert-parent');
         var $alert = $alertDiv.children('.alert');
         $alert.css('width', $alert.outerWidth()+1);
-        $alertDiv.hide();
+        $alertDiv.hide().css('visibility', 'unset');
         
 
         

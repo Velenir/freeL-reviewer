@@ -177,22 +177,6 @@ Submission.post('findOneAndUpdate', function(doc){
   }
 });
 
-// var SubmissionModel = mongoose.model('Submission', Submission);
-// var sb1 = new SubmissionModel({course: 0, week:{obj : '56b76e77faa0e9ba7a201218', number: 1}, submission: 'Example Submission', userComment: 'USER COMMENT', reviewsRequired: 3, isReviewed: false, title: "disposable", user: {}});
-// sb1.save(function (err, sub) {
-//   console.log("err",err);
-//   console.log('IS modified', sub.isModified('isReviewed'));
-//   sub.reviews.push({}); sub.reviews.push({}); sub.reviews.push({});
-//   console.log(sub.updatedReviewed());
-//   // sub.isReviewed = false;
-//   console.log('IS modified', sub.isModified('isReviewed'));
-//   console.log('modified', sub.modifiedPaths());
-// });
-
-
-
-// module.exports = SubmissionModel;
-
 
 // toObject is called when receiving document from database
 // toJSON is called when retrieving from serialized data storage (as in req.session.sub = sub => session gets saved => session gets retrieved already stringified)
@@ -200,24 +184,22 @@ Submission.post('findOneAndUpdate', function(doc){
 // toJSON always destroys functions
 // toObject can get functions back in transform
 
-Submission.set('toObject', { getters: true});//, transform: function (doc, ret, options) {
-//   ret.updatedReviewed = Submission.methods.updatedReviewed;
-// } });
+Submission.set('toObject', { getters: true});
 Submission.set('toJSON', { getters: true});
 // specify the transform schema option
-if (!Submission.options.toObject) Submission.options.toObject = {};
-Submission.options.toObject.transform = function (doc, ret, options) {
-  console.log('toObject');
-  ret.updatedReviewed = Submission.methods.updatedReviewed;
-  ret.Objected = true;
-};
-
-if (!Submission.options.toJSON) Submission.options.toJSON = {};
-Submission.options.toJSON.transform = function (doc, ret, options) {
-  console.log('toJSON');
-  ret.updatedReviewed = Submission.methods.updatedReviewed;
-  ret.FUNC = function (arguments) {console.log('FUNC');}
-  ret.JSONed = true;
-};
+// if (!Submission.options.toObject) Submission.options.toObject = {};
+// Submission.options.toObject.transform = function (doc, ret, options) {
+//   console.log('toObject');
+//   ret.updatedReviewed = Submission.methods.updatedReviewed;
+//   ret.Objected = true;
+// };
+//
+// if (!Submission.options.toJSON) Submission.options.toJSON = {};
+// Submission.options.toJSON.transform = function (doc, ret, options) {
+//   console.log('toJSON');
+//   ret.updatedReviewed = Submission.methods.updatedReviewed;
+//   ret.FUNC = function (arguments) {console.log('FUNC');}
+//   ret.JSONed = true;
+// };
 
 module.exports = mongoose.model('Submission', Submission);

@@ -89,7 +89,7 @@ form .alert {
   min-height: 70px;
 }
 
-.reviewersComments .submission-text {
+.reviewers-comments .submission-text {
   /*width: 90%;
   float: right;
   margin-right: 20px;*/
@@ -97,7 +97,7 @@ form .alert {
   margin-left: 35px;
 }
 
-.reviewersComments > label:first-child {
+.reviewers-comments > label:first-child {
   margin-bottom: 20px;
 }
 
