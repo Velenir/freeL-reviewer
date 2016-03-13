@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 function NumberArray(key, options) {
-  mongoose.SchemaType.call(this, key, options, 'NumberArray');
+	mongoose.SchemaType.call(this, key, options, 'NumberArray');
 }
 NumberArray.prototype = Object.create(mongoose.SchemaType.prototype);
 
@@ -11,170 +11,174 @@ NumberArray.prototype = Object.create(mongoose.SchemaType.prototype);
 // can't convert it.
 NumberArray.prototype.cast = function(val) {
 
-    var res = Array.from(val, el => {
-      var n = Number(el);
-      if(isNaN(n)) throw new mongoose.SchemaType.CastError('NumberArray', val + ' contains not a number');
-      return n;
-    });
-    console.log(val, '=>', res);
-    return res;
+	var res = Array.from(val, el => {
+		var n = Number(el);
+		if(isNaN(n)) throw new mongoose.SchemaType.CastError('NumberArray', val + ' contains not a number');
+		return n;
+	});
+	// console.log(val, '=>', res);
+	return res;
 };
 
 // Don't forget to add `NumberArray` to the type registry
-mongoose.Schema.Types.NumberArray = NumberArray;
+Schema.Types.NumberArray = NumberArray;
 
-function getReviewed(revN) {
-  // getting actual value
-  // will be set upon saving the document
-  return this.reviews.length >= this.reviewsRequired;
-}
+// function getReviewed(revN) {
+// 	// getting actual value
+// 	// will be set upon saving the document
+// 	return this.reviews.length >= this.reviewsRequired;
+// }
 
 var Review = new Schema({
-  author: {id: {type: Schema.Types.ObjectId, ref: 'Account'}, username: String},
-  scores: [NumberArray],
-  comment: {type: String, trim: true}
+	author: {id: {type: Schema.Types.ObjectId, ref: 'Account'}, username: String},
+	scores: [NumberArray],
+	comment: {type: String, trim: true}
 });
 
 
 var Submission = new Schema({
-    course: {type: Number, ref: 'Course', required: true},
-    week: {type: {obj:{type: Schema.Types.ObjectId, ref: 'Week'}, number: Number}, required: true},
-    user: {type: {userId: {type: Schema.Types.ObjectId, ref: 'Account', index: true}, username: String}, required: true},
-    title: {type: String, required: true, trim: true},
-    submission: {type: String, required: true, trim: true},
-    userComment: {type: String, trim: true},
-    reviewsRequired: Number,
-    reviews: [Review],
-    isReviewed: {type: Boolean, index: true}//, get: getReviewed}
-  }, {timestamps: true});
+	course: {type: Number, ref: 'Course', required: true},
+	week: {type: {obj:{type: Schema.Types.ObjectId, ref: 'Week'}, number: Number}, required: true},
+	user: {type: {userId: {type: Schema.Types.ObjectId, ref: 'Account', index: true}, username: String}, required: true},
+	title: {type: String, required: true, trim: true},
+	submission: {type: String, required: true, trim: true},
+	userComment: {type: String, trim: true},
+	reviewsRequired: Number,
+	reviews: [Review],
+	isReviewed: {type: Boolean, index: true}//, get: getReviewed}
+}, {timestamps: true});
 
 Submission.index({course: 1, 'week.number': 1});
 
 // mongoose.model('Week').findOne({_id: '56b76e77faa0e9ba7a201218'}, function(err, week){
-//     console.log("Week:", week);
+//		 console.log("Week:", week);
 // });
 
 // sub.reviewed is true if sub has received at least reviewsRequired number of reviews
 Submission.virtual('calculatedReviewed').get(function(){
-  return this.reviews.length >= this.reviewsRequired;
+	return this.reviews.length >= this.reviewsRequired;
 });
 
 Submission.methods.updatedReviewed = function () {
-  console.log('INSIDE updatedReviewed');
-  return this.isReviewed = this.reviews.length >= this.reviewsRequired;
-  };
+	console.log('INSIDE updatedReviewed');
+	return this.isReviewed = this.reviews.length >= this.reviewsRequired;
+};
 
 Submission.methods.updatedReviewedFromWeek = function (week) {
-  if(week) {
-    this.reviewsRequired = week.reviewsRequired;
-  } else if(this.week.obj.reviewsRequired) {
-    this.reviewsRequired = this.week.obj.reviewsRequired;
-  }
-  return this.isReviewed = this.reviews.length >= this.reviewsRequired;
+	if(week) {
+		this.reviewsRequired = week.reviewsRequired;
+	} else if(this.week.obj.reviewsRequired) {
+		this.reviewsRequired = this.week.obj.reviewsRequired;
+	}
+	return this.isReviewed = this.reviews.length >= this.reviewsRequired;
 };
 
 
 Submission.statics.updateReviewedStates = function (courseId, weekN) {
-  var self = this;
+	var self = this;
 
-  // if weekN was not provided assume courseId to be week._id
-  var condition = weekN ? {course: courseId, number: weekN} : {_id: courseId};
+	// if weekN was not provided assume courseId to be week._id
+	var condition = weekN ? {course: courseId, number: weekN} : {_id: courseId};
 
-  var promise = mongoose.model('Week').findOne(condition, 'reviewsRequired').exec();
-  return promise.then(function(week){
-    if(!week) throw new Error('no week found');
+	var promise = mongoose.model('Week').findOne(condition, 'reviewsRequired').exec();
+	return promise.then(function(week){
+		if(!week) throw new Error('no week found');
 
-    var revN = week.reviewsRequired;
-    // revN should always be >0, but just in case we'll need submissions not up for review
-    var condition = {course: week.course, 'week.number': week.number};
-    if(revN > 0) condition['reviews.'+(revN-1)] = {$exists: true};
+		var revN = week.reviewsRequired;
+		// revN should always be >0, but just in case we'll need submissions not up for review
+		var condition = {course: week.course, 'week.number': week.number};
+		if(revN > 0) condition['reviews.'+(revN-1)] = {$exists: true};
 
-    return self.update(condition, {isReviewed: true, reviewsRequired: revN}, {multi: true}).exec()
-  }).catch(function(err){
-    console.log('Error updating ReviewdStates:', err);
-  });
+		return self.update(condition, {isReviewed: true, reviewsRequired: revN}, {multi: true}).exec();
+	}).catch(function(err){
+		console.log('Error updating ReviewdStates:', err);
+	});
 };
 
 // inserts or updates Submission with {course: week.course, 'week.number': week.weekN} (unique index)
 // also resets isReviewed and reviews
 Submission.statics.upsertSub = function (userId, username, week, formBody, cb) {
-  return this.findOneAndUpdate({'user.userId': userId, course: week.course, 'week.number': week.weekN}, {'week.obj': week.weekId, title: formBody.title, submission: formBody.submission, userComment: formBody.comments, reviewsRequired: week.reviewsRequired, isReviewed: false, reviews: [], $setOnInsert: {'user.username': username}}, {new: true, upsert: true}, cb);
+	return this.findOneAndUpdate({'user.userId': userId, course: week.course, 'week.number': week.weekN}, {'week.obj': week.weekId, title: formBody.title, submission: formBody.submission, userComment: formBody.comments, reviewsRequired: week.reviewsRequired, isReviewed: false, reviews: [], $setOnInsert: {'user.username': username}}, {new: true, upsert: true}, cb);
 };
 
 Submission.statics.addSub = function (userId, username, week, formBody, cb) {
 
-  // remove old submission if there is one
-  // removal is better than updating existing because other users keep track of old submission in their hasReviewed
-  var removalPromise = this.remove({'user.userId': userId, course: week.course, 'week.number': week.weekN}).exec();
+	// remove old submission if there is one
+	// removal is better than updating existing because other users keep track of old submission in their hasReviewed
+	var removalPromise = this.remove({'user.userId': userId, course: week.course, 'week.number': week.weekN}).exec();
 
-  // this is actually a Model, so new this({}) works correctly
-  var sub = new this({course: week.course, week: {number: week.weekN, obj: week.weekId}, user: {userId: userId, username: username}, title: formBody.title, submission: formBody.submission, userComment: formBody.comments, reviewsRequired: week.reviewsRequired, isReviewed: false});
+	// this is actually a Model, so new this({}) works correctly
+	var sub = new this({course: week.course, week: {number: week.weekN, obj: week.weekId}, user: {userId: userId, username: username}, title: formBody.title, submission: formBody.submission, userComment: formBody.comments, reviewsRequired: week.reviewsRequired, isReviewed: false});
 
-  return removalPromise.then(function () {
-    return sub.save();
-  }).onResolve(cb);
+	return removalPromise.then(function () {
+		return sub.save();
+	}).onResolve(cb);
+	// WARNING onResolve will break when mpromise becomes deprecated
 };
 
 
 // updates Submission with a new review
 Submission.statics.addReview = function (subId, author, reviewBody, cb) {
-  // var scores = reviewBody.scores.map(function (nestedArr) {
-  //   return nestedArr.map(function (strEl) {return parseInt(strEl, 10);});
-  // });
-  // console.log("converted scores:", scores);
-  var review = {author: author, scores: reviewBody.scores, comment: reviewBody.comment};
+	// var scores = reviewBody.scores.map(function (nestedArr) {
+	//	 return nestedArr.map(function (strEl) {return parseInt(strEl, 10);});
+	// });
+	// console.log("converted scores:", scores);
+	var review = {author: author, scores: reviewBody.scores, comment: reviewBody.comment};
+	console.log('ADDING REVIEW');
 
-  return this.findByIdAndUpdate(subId, {$push: {reviews: review}}, {new: true}, cb);
+	return this.findByIdAndUpdate(subId, {$push: {reviews: review}}, {new: true}, cb);	// NOTE needs {new: true} so that post-hook gets the updated submission
 };
 
 Submission.pre('save', function(next) {
-  // console.log('SAVING Submission:', this);
-  // if reviewsRequired already set, skip resetting
-  if(this.reviewsRequired !== undefined) {
-    this.updatedReviewed();
-    return next();
-  };
+	// console.log('SAVING Submission:', this);
+	// if reviewsRequired already set, skip resetting
+	if(this.reviewsRequired !== undefined) {
+		this.updatedReviewed();
+		return next();
+	}
 
 
-  this.populate({path: 'week.obj', model: 'Week'}, function(err, doc){
-    if(err) return console.log('Submission Population Error', err);
+	this.populate({path: 'week.obj', model: 'Week'}, function(err, doc){
+		if(err) return console.log('Submission Population Error', err);
 
-    // doc === this from outer function
+		// doc === this from outer function
 
-    doc.reviewsRequired = doc.week.obj.reviewsRequired;
+		doc.reviewsRequired = doc.week.obj.reviewsRequired;
 
-    doc.updatedReviewed();
+		doc.updatedReviewed();
 
-    next();
-  });
+		next();
+	});
 });
 
 Submission.post('save', function(doc){
-  // console.log("SAVED Submission", doc);
-  // console.log("This value:", this);
-  mongoose.model('Week').update({_id: doc.week.obj}, {$addToSet: {submissions: doc._id}}, function(err, raw){
-    if (err) return console.log('Week Update Error', err);
-    console.log('The raw response from Mongo was ', raw);
-  });
+	// console.log("SAVED Submission", doc);
+	// console.log("This value:", this);
+	mongoose.model('Week').update({_id: doc.week.obj}, {$addToSet: {submissions: doc._id}}, function(err, raw){
+		if (err) return console.log('Week Update Error', err);
+		console.log('The raw response from Mongo was ', raw);
+	});
 });
 
 Submission.post('findOneAndUpdate', function(doc){
-  // console.log("Found and Updated Submission", doc);
-  // console.log("UPSERTED:", doc.upserted);
-  // console.log("This value conditions:", this._conditions);
-  mongoose.model('Week').update({_id: doc.week.obj}, {$addToSet: {submissions: doc._id}}, function(err, raw){
-    if (err) return console.log('Week Update Error', err);
-    console.log('The raw response from Mongo was ', raw);
-  });
+	// console.log("Found and Updated Submission", doc);
+	// console.log("UPSERTED:", doc.upserted);
+	// console.log("This value conditions:", this._conditions);
+	mongoose.model('Week').update({_id: doc.week.obj}, {$addToSet: {submissions: doc._id}}, function(err, raw){
+		if (err) return console.log('Week Update Error', err);
+		console.log('The raw response from Mongo was ', raw);
+	});
 
-  //check if submission has enough reviews to be considered reviewed
-  //if so, save with new isReviewed value
-  doc.updatedReviewed();
-  if(doc.isModified('isReviewed')){
-    doc.save(function (err) {
-      if(err) console.log('Submission save error:', err);
-    })
-  }
+	// console.log('FoundAndUpdate post-hook');
+
+	//check if submission has enough reviews to be considered reviewed
+	//if so, save with new isReviewed value
+	doc.updatedReviewed();
+	if(doc.isModified('isReviewed')){
+		doc.save(function (err) {
+			if(err) console.log('Submission save error:', err);
+		});
+	}
 });
 
 
@@ -189,17 +193,17 @@ Submission.set('toJSON', { getters: true});
 // specify the transform schema option
 // if (!Submission.options.toObject) Submission.options.toObject = {};
 // Submission.options.toObject.transform = function (doc, ret, options) {
-//   console.log('toObject');
-//   ret.updatedReviewed = Submission.methods.updatedReviewed;
-//   ret.Objected = true;
+//	 console.log('toObject');
+//	 ret.updatedReviewed = Submission.methods.updatedReviewed;
+//	 ret.Objected = true;
 // };
 //
 // if (!Submission.options.toJSON) Submission.options.toJSON = {};
 // Submission.options.toJSON.transform = function (doc, ret, options) {
-//   console.log('toJSON');
-//   ret.updatedReviewed = Submission.methods.updatedReviewed;
-//   ret.FUNC = function (arguments) {console.log('FUNC');}
-//   ret.JSONed = true;
+//	 console.log('toJSON');
+//	 ret.updatedReviewed = Submission.methods.updatedReviewed;
+//	 ret.FUNC = function (arguments) {console.log('FUNC');}
+//	 ret.JSONed = true;
 // };
 
 module.exports = mongoose.model('Submission', Submission);

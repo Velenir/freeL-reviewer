@@ -34,3 +34,12 @@ data
 
 #TODO local lists
 .imdone
+
+#ESLint config file
+.eslintrc.json
+
+#distribution ready uglified, minified
+dist
+
+#CSS compiled by atom in-place
+public/stylesheets/*.css

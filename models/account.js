@@ -4,11 +4,11 @@ var passportLocalMongoose = require('passport-local-mongoose');
 
 
 var Account = new Schema({
-    username: String,
-    password: {type: String, minlength: 7},
-    submissions: [{type: Schema.Types.ObjectId, ref: 'Submission'}],
-    comments: [{type: Schema.Types.ObjectId, ref: 'Comment'}],
-    hasReviewed: [{type: Schema.Types.ObjectId, ref: 'Submission'}]
+	username: String,
+	password: {type: String, minlength: [7, '`{PATH}` is shorter than the minimum allowed length ({MINLENGTH}).']},
+	submissions: [{type: Schema.Types.ObjectId, ref: 'Submission'}],
+	comments: [{type: Schema.Types.ObjectId, ref: 'Comment'}],
+	hasReviewed: [{type: Schema.Types.ObjectId, ref: 'Submission'}]
 });
 
 
@@ -17,12 +17,10 @@ var Account = new Schema({
 // solution -- supply custom passwordValidator in plugin options
 var passwordPath = Account.path('password');
 function passwordValidator(password, cb) {
-    var err = passwordPath.doValidateSync(password);
-    // console.log("Validation error:", err);
-    // don't actually display password in the message
-    if(err) err.message = err.message.replace("(`" + password + "`)", '');
+	var err = passwordPath.doValidateSync(password);
+	// console.log("Validation error:", err);
 
-    cb(err);
+	cb(err);
 }
 
 Account.plugin(passportLocalMongoose, {passwordValidator: passwordValidator});

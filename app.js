@@ -1,6 +1,6 @@
 var express = require('express');
 var path = require('path');
-var favicon = require('serve-favicon');
+// var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
@@ -8,7 +8,7 @@ var bodyParser = require('body-parser');
 //passport requirements
 var mongoose = require('mongoose');
 var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
+// var LocalStrategy = require('passport-local').Strategy;
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
@@ -26,15 +26,16 @@ app.set('view engine', 'jade');
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
+// NOTE allows to parse values of <input name="scores[#{ind}][#{i}]"> form as objects
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 
 //use express-session before passport.session()
 app.use(require('express-session')({
-    secret: 'keyboard cat',
-    resave: false,
-    saveUninitialized: false
+	secret: 'keyboard cat',
+	resave: false,
+	saveUninitialized: false
 }));
 //use passport
 app.use(passport.initialize());
@@ -57,42 +58,42 @@ passport.deserializeUser(Account.deserializeUser());
 
 // mongoose establish connection to db
 mongoose.connect('mongodb://localhost/passport_local_mongoose_express4', function(err){
-  if(err) console.log('Connection erro:', err);
+	if(err) console.log('Connection erro:', err);
 });
 // mongoose.connection.once('open', function(){
-//   console.log('Opened Connection');
-//   Account.find({}, function(err, users){
-//     console.log('USERS:', users);
-//   });
+//	 console.log('Opened Connection');
+//	 Account.find({}, function(err, users){
+//		 console.log('USERS:', users);
+//	 });
 // });
 
 // CONNECTION EVENTS
 // When successfully connected
 mongoose.connection.on('connected', function () {
-  console.log('Mongoose default connection open ');
+	console.log('Mongoose default connection open ');
 });
 
 // If the connection throws an error
 mongoose.connection.on('error',function (err) {
-  console.log('Mongoose default connection error: ' + err);
+	console.log('Mongoose default connection error: ' + err);
 });
 
 // When the connection is disconnected
 mongoose.connection.on('disconnected', function () {
-  console.log('Mongoose default connection disconnected');
+	console.log('Mongoose default connection disconnected');
 });
 
 // TODO:30 remove later
 // app.use(function(req, res, next){
-//   console.log('SESSION:', req.session);
+//	 console.log('SESSION:', req.session);
 // });
 
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+	var err = new Error('Not Found');
+	err.status = 404;
+	next(err);
 });
 
 // error handlers
@@ -100,25 +101,25 @@ app.use(function(req, res, next) {
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('error', {
-      message: err.message,
-      error: err,
-      user: req.user
-    });
-  });
+	app.use(function(err, req, res) {
+		res.status(err.status || 500);
+		res.render('error', {
+			message: err.message,
+			error: err,
+			user: req.user
+		});
+	});
 }
 
 // production error handler
 // no stacktraces leaked to user
-app.use(function(err, req, res, next) {
-  res.status(err.status || 500);
-  res.render('error', {
-    message: err.message,
-    error: {},
-    user: req.user
-  });
+app.use(function(err, req, res) {
+	res.status(err.status || 500);
+	res.render('error', {
+		message: err.message,
+		error: {},
+		user: req.user
+	});
 });
 
 

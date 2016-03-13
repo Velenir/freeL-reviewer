@@ -1,0 +1,152 @@
+$footer-height: 80px;
+$footer-color: #eee;
+
+$link-color: #00b7ff;
+$header-separator-color: #eee;
+$gutter-color: #fcf8e3;
+$task-help-text-color: #f7f9f9;
+$circle-number-color: #d9edf7;
+
+$submission-text-min-height: 70px;
+
+
+// eliminate space between navbar and main content (e.g. jumbotron)
+header > .navbar {
+  margin-bottom: 0;
+}
+
+// Sticky Footer Start
+html {
+  // makes html take all page
+  min-height: 100%;
+  // allows for footer to be absolutely positioned relative to html
+  position: relative;
+}
+
+body {
+  // padding: 50px;
+  font: 14px 'Lucida Grande', Helvetica, Arial, sans-serif;
+}
+
+main {
+  // provides space for the footer
+  margin-bottom: $footer-height;
+}
+
+footer {
+  position: absolute;
+  // stick to bottom
+  bottom: 0;
+  width: 100%;
+  height: $footer-height;
+  background-color: $footer-color;
+}
+// Sticky Footer End
+
+a {
+  color: $link-color;
+}
+
+// #courses.list-group > .list-group-item-divider {
+//   border: none;
+//   background-color: $gutter-color;
+//   // to negate margin-bottom: -1px of list-group-item above
+//   margin-top: -1px;
+// }
+
+#courses > .list-group-item {
+  &:not(:last-child) {
+  margin-bottom: 20px;
+  $height: 20px;
+
+    // gutter-like separater between list elements
+    &:after {
+      content: '';
+      display: block;
+      background-color: $gutter-color;
+      position: absolute;
+      bottom: -$height - 1;
+      margin: 0 -15px;
+      height: $height;
+      width: 100%;
+    }
+  }
+}
+
+// otherwise textarea can be resized beyond .panel along x-axis
+.panel form textarea {
+  resize: vertical;
+}
+
+// otherwise gets overridden easily by parent
+form .alert {
+  text-align: initial;
+}
+
+.task-help-text {
+  padding: 5px;
+  margin-bottom: 0;
+  background-color: $task-help-text-color;
+}
+
+.circle-number {
+  border-radius: 50%;
+  background-color: $circle-number-color;
+
+  $min-width: 2em;
+  min-width: $min-width;
+  display: inline-block;
+  text-align: center;
+  line-height: $min-width;
+}
+
+.submission-text {
+  height: auto;
+  min-height: $submission-text-min-height;
+}
+
+.reviewers-comments {
+  .submission-text {
+    // width: 90%;
+    // float: right;
+    // margin-right: 20px;
+    $margin-left: 35px;
+    width: calc(100% - #{$margin-left});
+    margin-left: $margin-left;
+  }
+
+  > label:first-child {
+    margin-bottom: 20px;
+  }
+}
+
+.panel-heading {
+  .panel-info > .panel-collapse > & {
+    color: #31708f;
+    background-color: #d9edf7;
+    border-color: #bce8f1;
+  }
+
+  @at-root #assignment div#{&}[data-toggle="collapse"]{
+    color: #fff;
+    background-color: #337ab7;
+    margin: 0 -3px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+}
+
+.assignment-header {
+  float: left;
+
+  &:only-child {
+    float: none;
+    text-align: center;
+  }
+}
+
+.review-others-link {
+  float: right;
+  border-left: 1px solid $header-separator-color;
+  padding: 0 20px;
+}
