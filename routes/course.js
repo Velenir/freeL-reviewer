@@ -43,6 +43,7 @@ function addWeekToHashedData(session, currentWeek) {
 }
 
 function currentWeekIsSame(currentWeek, params) {
+	// == instead of === because course is int and id is String
 	return currentWeek && currentWeek.course == params.id && currentWeek.weekN == params.n && currentWeek.id && currentWeek.tasks && currentWeek.topic && currentWeek.url;
 }
 
@@ -59,55 +60,32 @@ function constructCurrentWeek(week) {
 router.all('/*', requireAuthorization);
 
 /* GET course by id (whic is also its number) */
-router.get('/:id', function(req, res, next) {
+router.get('/:id(\\d+)', function(req, res, next) {
 	res.send('respond with a COURSE resource');
 });
 
 /* GET courses week by week's number */
-router.get('/:id/week:n', function(req, res, next) {
+router.get('/:id(\\d+)/week:n(\\d+)', function(req, res, next) {
 	res.send('respond with a Week ' + req.params.n +' resource');
 });
 
-
-// TODO put currentWeek getters into middleware for both /post and /review
-// GET post assignment page
-router.get('/:id/week:n/post', function(req, res, next) {
+function populateCurrentWeek(req, res, next) {
+	console.log('req.params:', req.params);
 	var currentWeek = req.session.currentWeek;
-	console.log('STAGE 1');
 	// if currentWeek already filled with id and is the same skip reassigning
 	// provided we can rely on weeks collection having unique {course, number} fileds
-	// == instead of === because course is int and id is String
 	if(currentWeekIsSame(currentWeek, req.params)){
-		// mySub only available from redirect after /addsubmission or /review?sub=,
-		// in case of direct link to /post should reload in case of new reviews (hence mySub reset to undefined)
-		if(currentWeek.mySub) {
-			req.submission = currentWeek.mySub;
-			currentWeek.mySub = undefined;
-			// console.log('had mySub with:', req.submission);
-			// console.log('had updatedReviewed method:', req.submission.updatedReviewed);
-			// console.log('calculatedReviewed:', req.submission.calculatedReviewed);
-			return next();
-		}
+		// reviewingSub is available so that user doesn't change revieing submission on simple reload
+		console.log('currentWeek checks, going next');
 
-		console.log('STAGE 1.5');
-
-		Submission.findOne({course: +req.params.id, 'week.number': +req.params.n, 'user.userId': req.user._id}, function (err, sub) {
-			if(err) return next(err);
-
-			req.submission = sub;
-			if(sub) console.log('found sub for user', req.user._id);
-			else console.log('no sub found for user', req.user._id, 'in week', req.params.n, 'in course', req.params.id);
-			next();
-		});
-		return;
+		return next();
 	}
+
+	console.log('currentWeek wrong, filling now');
 
 	var condition = {course: req.params.id, number: req.params.n};
 
-	console.log('STAGE 1.7');
-	console.log('looking for week with', condition);
-
-	Week.findOne(condition).populate({path: 'submissions', match: {'user.userId': req.user._id}}).exec(function(err, week){
+	Week.findOne(condition, '-submissions', function(err, week){
 		if(err) {
 			console.log('Error getting week:',err);
 			return res.status(406).send('Error getting week:',err);
@@ -117,19 +95,43 @@ router.get('/:id/week:n/post', function(req, res, next) {
 			console.log('No week found');
 			return res.status(406).send('No such week');
 		}
-		// console.log('Populated week:', week);
-		// console.log('Submissions:', week.submissions);
+
 		// inject week data into req.session to make use of in post form call
 		req.session.currentWeek = constructCurrentWeek(week);
-		req.submission = week.submissions.length ? week.submissions[0] : null;
-
-		if(req.submission) {
-			// in case there was a change in weeks collection
-			req.submission.updatedReviewedFromWeek(week);
-		}
+		console.log('currentWeek filled, going next');
 		next();
 	});
+}
 
+router.get('/:id(\\d+)/week:n(\\d+)/:act(?:post|review)', populateCurrentWeek);
+
+
+// DONE:40 put currentWeek getters into middleware for both /post and /review
+// GET post assignment page
+router.get('/:id(\\d+)/week:n(\\d+)/post', function(req, res, next) {
+	var currentWeek = req.session.currentWeek;
+
+	// mySub only available from redirect after /addsubmission or /review?sub=,
+	// in case of direct link to /post should reload in case of new reviews (hence mySub reset to undefined)
+	if(currentWeek.mySub) {
+		req.submission = currentWeek.mySub;
+		currentWeek.mySub = undefined;
+		// console.log('had mySub with:', req.submission);
+		// console.log('had updatedReviewed method:', req.submission.updatedReviewed);
+		// console.log('calculatedReviewed:', req.submission.calculatedReviewed);
+		return next();
+	}
+
+	console.log('STAGE 1.5');
+
+	Submission.findOne({course: +req.params.id, 'week.number': +req.params.n, 'user.userId': req.user._id}, function (err, sub) {
+		if(err) return next(err);
+
+		req.submission = sub;
+		if(sub) console.log('found sub for user', req.user._id);
+		else console.log('no sub found for user', req.user._id, 'in week', req.params.n, 'in course', req.params.id);
+		next();
+	});
 
 }, function (req, res) {
 	console.log('STAGE 2');
@@ -147,42 +149,7 @@ router.get('/:id/week:n/post', function(req, res, next) {
 
 
 // GET just submitted submission overview page
-router.get('/:id/week:n/review', function(req, res, next) {
-	var currentWeek = req.session.currentWeek;
-	// if currentWeek already filled with id and is the same skip reassigning
-	// provided we can rely on weeks collection having unique {course, number} fileds
-	if(currentWeekIsSame(currentWeek, req.params)){
-		// reviewingSub is available so that user doesn't change revieing submission on simple reload
-		console.log('STAGE 1.1');
-
-		return next();
-	}
-
-	console.log('STAGE 1.2');
-
-	var condition = {course: req.params.id, number: req.params.n};
-
-	Week.findOne(condition, '-submissions', function(err, week){
-		if(err) {
-			console.log('Error getting week:',err);
-			return res.status(406).send('Error getting week:',err);
-		}
-
-		if(!week) {
-			console.log('No week found');
-			return res.status(406).send('No such week');
-		}
-
-		// inject week data into req.session to make use of in post form call
-		req.session.currentWeek = constructCurrentWeek(week);
-
-		next();
-	});
-
-},
-
-
-function(req, res, next) {
+router.get('/:id(\\d+)/week:n(\\d+)/review', function(req, res, next) {
 	// Check that the user has already made a submission for this week,
 	// otherwise don't allow to see others' submissions
 	console.log('STAGE PRE_REVIEW');
@@ -250,7 +217,7 @@ function(req, res, next) {
 function (req,res, next) {
 	var reviewingSub = req.session.reviewingSub, currentWeek = req.session.currentWeek;
 	if(reviewingSub && reviewingSub.course == req.params.id && reviewingSub.week.number == req.params.n && reviewingSub.week.obj.toString() === currentWeek.id.toString()) {
-		console.log('STAGE 2.1');
+		console.log('STAGE 1.1');
 
 		return next();
 	} else {
@@ -260,7 +227,7 @@ function (req,res, next) {
 			if(req.user.hasReviewed) subsNotForReview = subsNotForReview.concat(req.user.hasReviewed);
 		}
 
-		console.log('STAGE 2.2');
+		console.log('STAGE 1.2');
 		console.log('notForReview', subsNotForReview);
 
 		Submission.aggregate([
@@ -288,7 +255,7 @@ function (req, res) {
 	var sub = req.session.reviewingSub;
 
 	if(sub) {
-		console.log('STAGE 3');
+		console.log('STAGE 2');
 
 		var hashedKey = addSubToHashedData(req.session, sub);
 
