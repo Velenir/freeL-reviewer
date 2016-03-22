@@ -150,3 +150,15 @@ form .alert {
   border-left: 1px solid $header-separator-color;
   padding: 0 20px;
 }
+
+table.course-weeks > tbody > tr > td {
+  vertical-align: inherit;
+
+  .btn {
+    margin-left: 20px;
+  }
+}
+
+.smaller {
+  font-size: 55%;
+}

@@ -1,7 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-
+var urlValidator = require('./functions/urlValidator');
 
 var coursesTotal;
 // on open connection get number of elements in the courses collection
@@ -18,6 +18,7 @@ var Course = new Schema({
 	// assign id the number of the course in order of creation
 	_id: {type: Number, default: function(){ return coursesTotal++;}},
 	name: {type: String, required: true},
+	url: {type: String, trim: true, validate: urlValidator},
 	weeks: [{type: Schema.Types.ObjectId, ref: 'Week'}]
 }
 // , {timestamps: true}

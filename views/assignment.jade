@@ -8,7 +8,7 @@ block main
           .clearfix
             h2.assignment-header
               //- small Week #{week.weekN} assignment: 
-              a(href=week.url title="at Coursera")= week.topic
+              a(href=week.url, title="at Coursera", target="_blank")= week.topic
             block assignmentHeaderRight
 
               

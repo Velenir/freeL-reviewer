@@ -4,13 +4,7 @@ var Schema = mongoose.Schema;
 if(!requiredTimes) var requiredTimes = 0;
 console.log('requiredTimes:', ++requiredTimes);
 
-
-var validate = {
-	validator: function(val) {
-		return /^\s*(https?|ftp):\/\/[^\s/$.?#].[^\s]*\s*$/.test(val);
-	},
-	message: '{VALUE} is not a valid URL'
-};
+var urlValidator = require('./functions/urlValidator');
 
 function updateSubmissions(revN) {
 	console.log("This VAL in setter:", this);
@@ -24,7 +18,7 @@ var Week = new Schema({
 	number: {type: Number, required: true},
 	tasks: [{title: String, helpText: String, criteria: [String]}],
 	topic: {type: String, required: true, trim: true},
-	url: {type: String, required: true, trim: true, validate: validate},
+	url: {type: String, required: true, trim: true, validate: urlValidator},
 	course: {type: Number, ref: 'Course', required: true},
 	reviewsRequired: {type: Number, default: 3, set: updateSubmissions},
 	submissions: [{type: Schema.Types.ObjectId, ref: 'Submission'}]

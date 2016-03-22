@@ -35,15 +35,8 @@ router.get('/', function(req, res, next) {
 		throw err;
 	});
 
-	var subsNotForReview = [];
-	if(req.user) {
-		if(req.user.submissions) subsNotForReview = subsNotForReview.concat(req.user.submissions);
-		if(req.user.hasReviewed) subsNotForReview = subsNotForReview.concat(req.user.hasReviewed);
-	}
 
-	console.log("not for review:", subsNotForReview);
-
-	var aggrPromise = Submission.aggregate({
+	var command = {
 		"$group": {
 			"_id": "$week.obj",
 			"number": {
@@ -60,18 +53,40 @@ router.get('/', function(req, res, next) {
 						"else": 0
 					}
 				}
-			},
-			"availableForReview": {
-				"$sum": {
-					"$cond": {
-						"if": {"$or": ["$isReviewed", {"$setIsSubset": [["$_id"], subsNotForReview]}]},
-						"then": 0,
-						"else": 1
-					}
-				}
 			}
 		}
-	}).exec().then(function(result) {
+	};
+
+	var user = req.user;
+	if(user) {
+		var subsNotForReview = [];
+		if(user.submissions) subsNotForReview = subsNotForReview.concat(user.submissions);
+		if(user.hasReviewed) subsNotForReview = subsNotForReview.concat(user.hasReviewed);
+		command.$group.availableForReview = {
+			"$sum": {
+				"$cond": {
+					"if": {"$or": ["$isReviewed", {"$setIsSubset": [["$_id"], subsNotForReview]}]},
+					"then": 0,
+					"else": 1
+				}
+			}
+		};
+
+		// 0 => no posted submission, 1 => posted submission not yet reviewed, 2 => posted submission already reviewed
+		command.$group.postedSubState = {
+			"$max": {
+				"$cond": {
+					"if": {"$setIsSubset": [["$_id"], user.submissions]},
+					"then": {"$cond": {"if": "$isReviewed", "then": 2, "else": 1}},
+					"else": 0
+				}
+			}
+		};
+	}
+
+	// console.log("not for review:", subsNotForReview);
+
+	var aggrPromise = Submission.aggregate(command).exec().then(function(result) {
 		// console.log('Promised aggr result:', result);
 		var mappedResult = new Map();
 		for (var i = 0; i < result.length; ++i) {
@@ -91,7 +106,7 @@ router.get('/', function(req, res, next) {
 		// console.log("weeks in 1st course:", results[0][0].weeks);
 		// console.log('weeks mapped:', results[1]);
 		return res.render('index', {
-			user: req.user,
+			user: user,
 			courses: results[0],
 			weeksMap: results[1]
 		});
@@ -103,7 +118,7 @@ router.get('/', function(req, res, next) {
 	// Course.find({}).populate('weeks', '-_id -tasks').exec().then(function (courses) {
 	//	 console.log("Courses promise fulfilled");
 	//	 throw new Error('faux error');
-	//	 return res.render('index', { user : req.user, courses: courses });
+	//	 return res.render('index', { user : user, courses: courses });
 	// }, function (err) {
 	//	 console.log("Courses promise rejected");
 	//	 next(err);
