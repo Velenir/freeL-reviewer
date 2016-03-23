@@ -1,7 +1,7 @@
 var gulp = require('gulp');
 // var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
-// var imagemin = require('gulp-imagemin');
+var imagemin = require('gulp-imagemin');
 var sass = require('gulp-sass');
 var sourcemaps = require('gulp-sourcemaps');
 
@@ -13,7 +13,8 @@ var babel = require('gulp-babel');
 
 var bases = {
 	dist: 'dist/',
-	css: 'dist/public/stylesheets/'
+	css: 'dist/public/stylesheets/',
+	images: 'dist/public/images/'
 };
 
 var paths = {
@@ -37,27 +38,26 @@ gulp.task('build-scripts', function() {
 	// Minify and copy all JavaScript (except vendor scripts)
 	// with sourcemaps all the way down
 	return gulp.src(paths.scripts, { base:'./'})
-	.pipe(sourcemaps.init())
-	.pipe(babel({presets: ['es2015']}))
-	.pipe(uglify().on('error', gulpUtil.log))
-	// .pipe(concat('app.js'))
-	.pipe(sourcemaps.write('/sourcemaps'))
-	.pipe(gulp.dest(bases.dist));
+		.pipe(sourcemaps.init())
+		.pipe(babel({presets: ['es2015']}))
+		.pipe(uglify().on('error', gulpUtil.log))
+		// .pipe(concat('app.js'))
+		.pipe(sourcemaps.write('/sourcemaps'))
+		.pipe(gulp.dest(bases.dist));
 });
 
-// Copy all static images
-// gulp.task('buildimages', ['clean'], function() {
-//	 return gulp.src(paths.images)
-//		 // Pass in options to the task
-//		 .pipe(imagemin({optimizationLevel: 5}))
-//		 .pipe(gulp.dest('build/img'));
-// });
+// Copy and compress all static images
+gulp.task('build-images', function() {
+	return gulp.src(paths.images)
+		.pipe(imagemin({optimizationLevel: 5}))
+		.pipe(gulp.dest(bases.images));
+});
 
 // Build CSS from SASS
 gulp.task('build-css', function() {
 	return gulp.src(paths.sass)
 		.pipe(sourcemaps.init())	// Process the original sources
-			.pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
+		.pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
 		.pipe(sourcemaps.write('/sourcemaps')) // Add the map to modified source.
 		.pipe(gulp.dest(bases.css));
 });
@@ -85,5 +85,5 @@ gulp.task('watch', function() {
 // The default task (called when you run `gulp` from cli)
 // gulp.task('default', ['watch', 'scripts', 'images']);
 gulp.task('default', function (callback) {
-	runSequence('clean', ['copy', 'symlink', 'build-scripts', 'build-css'], callback);
+	runSequence('clean', ['copy', 'symlink', 'build-scripts', 'build-css', 'build-images'], callback);
 });
