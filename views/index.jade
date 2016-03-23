@@ -3,14 +3,14 @@ extends page
 block main
   .jumbotron
     .container
-      h1 Hello, world!
-      p A site where non-paying students of Coursera can post their assignments and review assignments of others.
+      h1 Hello, learners!
+      p A site where auditing students of Coursera can post their assignments and recieve reviews from other like-minded students.
       p
-        a.btn.btn-primary.btn-lg(href='#', role='button') Learn more
+        a.btn.btn-primary.btn-lg(href='about', role='button') Learn more
   
   .container
     .row
-      .col-sm-12.col-xs-12
+      .col-md-10.col-md-offset-1.col-xs-12
         ul#courses.list-group
           each course, ind in courses
             li.list-group-item            
@@ -28,41 +28,32 @@ block main
                       th Available for You to Review
                       th Your Submission
                 tbody
-                each weekId in course.weeks                  
-                  - var week = weeksMap.get(weekId.toString())
-                  tr
-                    td= week.number
-                    td= week.countAll
-                      if user && week.postedSubState === 0
-                        | 
-                        a.btn.btn-default(href="course/#{course.id}/week#{week.number}/post", type='button') Post yours
-                    td= week.countAll - week.countReviewed
-                    if user
-                      td= week.availableForReview
-                        | 
-                        - var disabled = week.postedSubState === 0 || week.availableForReview === 0
-                        a.btn.btn-default(href="course/#{course.id}/week#{week.number}/review", type='button', disabled=disabled class=(disabled ? "disabled" : "")) Review
-                      td(class=week.postedSubState === 1 ? "info" : week.postedSubState === 2 ? "success" : ""): a(href="course/#{course.id}/week#{week.number}/post")
-                        case week.postedSubState
-                          when 0
-                            span.glyphicon.glyphicon-plus(aria-hidden='true')
-                            |  Not Posted
-                          when 1
-                            span.glyphicon.glyphicon-pencil(aria-hidden='true')
-                            |  Edit your Submission
-                          when 2
-                            span.glyphicon.glyphicon-ok(aria-hidden='true')
-                            |  Submission reviewed
-                          default
-                            | 
-                    //- TODO:0 make an overview page with pagination through all submissions
-                    //- td: a(href="course/#{course.id}/week#{week.number}/overview") Overview
-
-
-    .row
-      .col-sm-9.col-sm-offset-1.col-xs-12
-        //- ul
-        //-   each value,key in courses
-        //-     li= key +': ' + value
-        //-     //- code...
-      
+                  each weekId in course.weeks                  
+                    - var week = weeksMap.get(weekId.toString())
+                    tr
+                      td= week.number
+                      td= week.countAll
+                        if user && week.postedSubState === 0
+                          | 
+                          a.btn.btn-default(href="course/#{course.id}/week#{week.number}/post", type='button') Post yours
+                      td= week.countAll - week.countReviewed
+                      if user
+                        td= week.availableForReview
+                          | 
+                          - var disabled = week.postedSubState === 0 || week.availableForReview === 0
+                          a.btn.btn-default(href="course/#{course.id}/week#{week.number}/review", type='button', disabled=disabled class=(disabled ? "disabled" : "")) Review
+                        td(class=week.postedSubState === 1 ? "info" : week.postedSubState === 2 ? "success" : ""): a(href="course/#{course.id}/week#{week.number}/post")
+                          case week.postedSubState
+                            when 0
+                              span.glyphicon.glyphicon-plus(aria-hidden='true')
+                              |  Not Posted
+                            when 1
+                              span.glyphicon.glyphicon-pencil(aria-hidden='true')
+                              |  Edit your Submission
+                            when 2
+                              span.glyphicon.glyphicon-ok(aria-hidden='true')
+                              |  Submission reviewed
+                            default
+                              | 
+                      //- TODO:0 make an overview page with pagination through all submissions
+                      //- td: a(href="course/#{course.id}/week#{week.number}/overview") Overview

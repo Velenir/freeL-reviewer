@@ -151,14 +151,27 @@ form .alert {
   padding: 0 20px;
 }
 
-table.course-weeks > tbody > tr > td {
-  vertical-align: inherit;
+table.course-weeks {
+  margin-top: 15px;
 
-  .btn {
-    margin-left: 20px;
+  > tbody > tr > td {
+    vertical-align: inherit;
+
+    .btn:only-child {
+      margin-left: 20px;
+    }
   }
 }
 
 .smaller {
   font-size: 55%;
+}
+
+.bigger {
+  font-size: 130%;
+}
+
+.about-text {
+  font-family: Georgia, serif;
+  text-align: justify;
 }

@@ -13,6 +13,7 @@ var passport = require('passport');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var course = require('./routes/course');
+var about = require('./routes/about');
 
 var app = express();
 
@@ -46,6 +47,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', routes);
 app.use('/users', users);
 app.use('/course', course);
+app.use('/about', about);
 
 // passport config
 var Account = require('./models/account');

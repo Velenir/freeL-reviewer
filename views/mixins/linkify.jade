@@ -12,7 +12,7 @@ mixin linkify(str)
   each item in result
     //- if isLink = true
     if item[1] 
-      a(href=item[0])= item[0]
+      a(href=item[0], target="_blank")= item[0]
       //- if plain text
     else
       = item[0]
