@@ -36,5 +36,16 @@ block content
   block footer
     footer
       .container
-        h3.text-primary Place sticky footer content here.
+        ul.footer-links
+          li: a(href='/') Home
+          li: a(href='about') About
+          li: a(href='https://github.com/Velenir') GitHub
+          
+        p
+          | Designed and built by 
+          a(href='https://github.com/Velenir', target='_blank') Velenir
+          | . Code licensed under 
+          a(href="https://github.com/Velenir", target="_blank") GPLv3
+          | .
+
   

@@ -1,5 +1,11 @@
-$footer-height: 80px;
-$footer-color: #eee;
+$footer-height: 100px;
+// $footer-color: #eee;
+$footer-color: #93DEEF;
+$footer-link-color: #333;
+$footer-text-color: lighten($footer-link-color, 30%);
+
+$jumbotron-color: #8EDDEF;
+$jumbotron-gradient: linear-gradient(to bottom,#F8F8F8 0,#8EDDEF 100%);
 
 $link-color: #00b7ff;
 $header-separator-color: #eee;
@@ -8,6 +14,13 @@ $task-help-text-color: #f7f9f9;
 $circle-number-color: #d9edf7;
 
 $submission-text-min-height: 70px;
+
+$bigger-font: 130%;
+$smaller-font: 55%;
+$footer-padding: 20px;
+
+$body-fonts: 'Lucida Grande', Helvetica, Arial, sans-serif;
+$jumbotron-heading-font: Georgia, serif;
 
 
 // eliminate space between navbar and main content (e.g. jumbotron)
@@ -25,7 +38,7 @@ html {
 
 body {
   // padding: 50px;
-  font: 14px 'Lucida Grande', Helvetica, Arial, sans-serif;
+  font: 14px $body-fonts;
 }
 
 main {
@@ -164,14 +177,46 @@ table.course-weeks {
 }
 
 .smaller {
-  font-size: 55%;
+  font-size: $smaller-font;
 }
 
 .bigger {
-  font-size: 130%;
+  font-size: $bigger-font;
 }
 
 .about-text {
   font-family: Georgia, serif;
   text-align: justify;
+}
+
+footer {
+  padding-top: $footer-padding;
+  padding-bottom: $footer-padding;
+
+  color: $footer-text-color;
+
+  a {
+    color: $footer-link-color;
+  }
+}
+
+.footer-links {
+  padding-left: 0;
+
+  li {
+    display: inline-block;
+
+    + li {
+      margin-left: 15px;
+    }
+  }
+}
+
+.jumbotron {
+  background-color: $jumbotron-color;
+  background-image: $jumbotron-gradient;
+
+  h1 {
+    font-family: $jumbotron-heading-font;
+  }
 }
