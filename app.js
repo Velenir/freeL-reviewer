@@ -44,10 +44,16 @@ app.use(passport.session());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(function (req, res, next) {
+	res.locals.user = req.user;
+	next();
+});
+
 app.use('/', routes);
 app.use('/users', users);
 app.use('/course', course);
 app.use('/about', about);
+
 
 // passport config
 var Account = require('./models/account');
@@ -107,8 +113,7 @@ if (app.get('env') === 'development') {
 		res.status(err.status || 500);
 		res.render('error', {
 			message: err.message,
-			error: err,
-			user: req.user
+			error: err
 		});
 	});
 }
@@ -119,8 +124,7 @@ app.use(function(err, req, res) {
 	res.status(err.status || 500);
 	res.render('error', {
 		message: err.message,
-		error: {},
-		user: req.user
+		error: {}
 	});
 });
 

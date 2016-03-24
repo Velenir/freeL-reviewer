@@ -144,7 +144,7 @@ router.get('/:id(\\d+)/week:n(\\d+)/post', function(req, res, next) {
 	var hashedKey = addWeekToHashedData(req.session, req.session.currentWeek);
 
 	// NOTE sub.updatedReviewed gets stripped during JSON.stringify() of on req.session save => load
-	res.render('post', { title: sub ? Submission.schema.methods.updatedReviewed.call(sub) ? 'Your assignment has been reviewed' : 'Edit your assignment' : 'Submit your assignment', user: req.user, submission: sub, week: req.session.currentWeek, hashedKey: hashedKey});
+	res.render('post', { title: sub ? Submission.schema.methods.updatedReviewed.call(sub) ? 'Your assignment has been reviewed' : 'Edit your assignment' : 'Submit your assignment', submission: sub, week: req.session.currentWeek, hashedKey: hashedKey});
 });
 
 
@@ -158,7 +158,7 @@ router.get('/:id(\\d+)/week:n(\\d+)/review', function(req, res, next) {
 
 		// if user doesn't have a previous submission for this course and week
 		if(!sub) {
-			return res.render('nothingtoreview', {user: req.user, reason: 'HAS YET TO SUBMIT', week: req.session.currentWeek});
+			return res.render('nothingtoreview', {reason: 'HAS YET TO SUBMIT', week: req.session.currentWeek});
 		}
 		// otherwise proceed
 		next();
@@ -199,14 +199,14 @@ function(req, res, next) {
 			// console.log('reviewed by user', req.user.hasReviewed.indexOf(sub._id) !== -1);
 
 			if(subReviewed || req.user.hasReviewed.indexOf(sub._id) !== -1) {
-				return res.render('nothingtoreview', {user: req.user, reason: 'ALREADY REVIEWED', week: currentWeek});
+				return res.render('nothingtoreview', {reason: 'ALREADY REVIEWED', week: currentWeek});
 			}
 
 			// WARNING don't set req.session.reviewingSub here; it should be only applicable to normal /review submissions
 			console.log('going to sub._id:', req.params.subid);
 
 			var hashedKey = addSubToHashedData(req.session, sub);
-			res.render('review', { title: 'Review assignment', user: req.user, submission: sub, week: currentWeek, hashedKey: hashedKey});
+			res.render('review', { title: 'Review assignment', submission: sub, week: currentWeek, hashedKey: hashedKey});
 		});
 		return;
 	}
@@ -259,10 +259,10 @@ function (req, res) {
 
 		var hashedKey = addSubToHashedData(req.session, sub);
 
-		res.render('review', { title: 'Review assignment', user: req.user, submission: req.session.reviewingSub, week: req.session.currentWeek, hashedKey: hashedKey});
+		res.render('review', { title: 'Review assignment', submission: req.session.reviewingSub, week: req.session.currentWeek, hashedKey: hashedKey});
 	} else{
 		// DONE:10 create nothingtoreview.jade view
-		res.render('nothingtoreview', {user: req.user, reason: 'NO SUBMISSIONS FOUND', week: req.session.currentWeek});
+		res.render('nothingtoreview', {reason: 'NO SUBMISSIONS FOUND', week: req.session.currentWeek});
 	}
 });
 

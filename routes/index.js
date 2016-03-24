@@ -106,7 +106,6 @@ router.get('/', function(req, res, next) {
 		// console.log("weeks in 1st course:", results[0][0].weeks);
 		// console.log('weeks mapped:', results[1]);
 		return res.render('index', {
-			user: user,
 			courses: results[0],
 			weeksMap: results[1]
 		});
@@ -118,7 +117,7 @@ router.get('/', function(req, res, next) {
 	// Course.find({}).populate('weeks', '-_id -tasks').exec().then(function (courses) {
 	//	 console.log("Courses promise fulfilled");
 	//	 throw new Error('faux error');
-	//	 return res.render('index', { user : user, courses: courses });
+	//	 return res.render('index', {  courses: courses });
 	// }, function (err) {
 	//	 console.log("Courses promise rejected");
 	//	 next(err);
@@ -130,7 +129,7 @@ router.all(['/register', '/login', '/login_register'], alreadyLoggedIn);
 
 // Get register page
 router.get('/register', function(req, res) {
-	res.render('register', {});
+	res.render('register');
 });
 
 // On Register form submission
@@ -164,7 +163,7 @@ router.post('/register', function(req, res) {
 
 // Get Login page
 router.get('/login', function(req, res) {
-	res.render('login', {});
+	res.render('login');
 });
 
 // On Login form submission
