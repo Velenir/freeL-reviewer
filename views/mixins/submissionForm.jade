@@ -6,7 +6,7 @@ mixin submissionForm
     .form-group
       label(for='submission') URLs to files in your submission:                  
       textarea#submission.form-control(name="submission", rows="8", placeholder="\nhttp://cloudshare.com/my_file.js\nhttp://cloudshare.com/my_other_file.html", required, readonly=subValid)= submission.submission
-      p.help-block It is recommended that your files are either directly accessible at these URLs or included in one archived file. Please consider uploading to a file-sharing service such as Dropbox or Google Drive. In that case don't forget to make your file publicly accessible.
+      p.help-block It is recommended that your files are either directly accessible at these URLs or included in one archived file. Please consider uploading to a file-sharing service such as Dropbox or Google Drive, or to a repository hosting service such as GitHub or GitLab. In that case don't forget to make your submission publicly accessible.
           
     .form-group
       label(for='comments') Comments:                  
