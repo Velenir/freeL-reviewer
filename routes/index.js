@@ -239,7 +239,7 @@ router.post('/addsubmission', function(req, res, next) {
 		return next(new Error('No currentWeek in user session'));
 	}
 
-	// DONE:20 get course and weekN from hashedData, not currentWeek
+	// DONE:30 get course and weekN from hashedData, not currentWeek
 	var week = takeHashedData(req.session, req.body.hk);
 	if (!week) {
 		console.log('No corresponding week in user session');
@@ -284,7 +284,7 @@ router.post('/addreview', function(req, res, next) {
 
 	console.log(req.body);
 
-	// DONE:30 get submission based on req.body key from req.session.reviewingSubs object
+	// DONE:40 get submission based on req.body key from req.session.reviewingSubs object
 	var sub = takeHashedData(req.session, req.body.hk);
 	// reset reviewed sub
 	req.session.reviewingSub = undefined;

@@ -1,15 +1,12 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-if(!requiredTimes) var requiredTimes = 0;
-console.log('requiredTimes:', ++requiredTimes);
-
 var urlValidator = require('./functions/urlValidator');
 
 function updateSubmissions(revN) {
-	console.log("This VAL in setter:", this);
-	console.log('revN =', revN);
-	console.log('revModified =', this.revModified);
+	// console.log("This VAL in setter:", this);
+	// console.log('revN =', revN);
+	// console.log('revModified =', this.revModified);
 	this.revModified = true;
 	return revN;
 }

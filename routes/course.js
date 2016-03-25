@@ -75,7 +75,7 @@ function populateCurrentWeek(req, res, next) {
 	// if currentWeek already filled with id and is the same skip reassigning
 	// provided we can rely on weeks collection having unique {course, number} fileds
 	if(currentWeekIsSame(currentWeek, req.params)){
-		// reviewingSub is available so that user doesn't change revieing submission on simple reload
+		res.locals.week = currentWeek;
 		console.log('currentWeek checks, going next');
 
 		return next();
@@ -97,7 +97,7 @@ function populateCurrentWeek(req, res, next) {
 		}
 
 		// inject week data into req.session to make use of in post form call
-		req.session.currentWeek = constructCurrentWeek(week);
+		res.locals.week = req.session.currentWeek = constructCurrentWeek(week);
 		console.log('currentWeek filled, going next');
 		next();
 	});
@@ -106,7 +106,7 @@ function populateCurrentWeek(req, res, next) {
 router.get('/:id(\\d+)/week:n(\\d+)/:act(?:post|review)', populateCurrentWeek);
 
 
-// DONE:40 put currentWeek getters into middleware for both /post and /review
+// DONE:50 put currentWeek getters into middleware for both /post and /review
 // GET post assignment page
 router.get('/:id(\\d+)/week:n(\\d+)/post', function(req, res, next) {
 	var currentWeek = req.session.currentWeek;
@@ -144,7 +144,7 @@ router.get('/:id(\\d+)/week:n(\\d+)/post', function(req, res, next) {
 	var hashedKey = addWeekToHashedData(req.session, req.session.currentWeek);
 
 	// NOTE sub.updatedReviewed gets stripped during JSON.stringify() of on req.session save => load
-	res.render('post', { title: sub ? Submission.schema.methods.updatedReviewed.call(sub) ? 'Your assignment has been reviewed' : 'Edit your assignment' : 'Submit your assignment', submission: sub, week: req.session.currentWeek, hashedKey: hashedKey});
+	res.render('post', { title: sub ? Submission.schema.methods.updatedReviewed.call(sub) ? 'Your assignment has been reviewed' : 'Edit your assignment' : 'Submit your assignment', submission: sub, hashedKey: hashedKey});
 });
 
 
@@ -158,7 +158,7 @@ router.get('/:id(\\d+)/week:n(\\d+)/review', function(req, res, next) {
 
 		// if user doesn't have a previous submission for this course and week
 		if(!sub) {
-			return res.render('nothingtoreview', {reason: 'HAS YET TO SUBMIT', week: req.session.currentWeek});
+			return res.render('nothingtoreview', {reason: 'HAS YET TO SUBMIT'});
 		}
 		// otherwise proceed
 		next();
@@ -171,7 +171,7 @@ function(req, res, next) {
 		console.log('STAGE 0');
 
 		// submission with given _id must belong to a proper week and course from the url
-		Submission.findOne({_id: req.query.sub, course: +req.params.id, 'week.number': +req.params.n}).populate({path: 'week.obj', select: '-submissions', model: 'Week'}).exec(function (err, sub) {
+		Submission.findOne({_id: req.query.sub, course: +req.params.id, 'week.number': +req.params.n}, function (err, sub) {
 			if(err) return next(err);
 
 			if(!sub) return next(new Error("No submission found."));
@@ -182,16 +182,12 @@ function(req, res, next) {
 			// console.log('sub.week.obj:', sub.week.obj);
 			var subReviewed = sub.updatedReviewedFromWeek();
 
-			var week = sub.week.obj;
-			// to skip extra lookup after redirect
-			var currentWeek = req.session.currentWeek = constructCurrentWeek(week);
-
 			// if same user, don't let him review his assignment
 			if(sub.user.userId.toString() === req.user._id.toString()) {
 				// console.log('Redirecting to /post', ':: has updatedReviewed method:', sub.updatedReviewed);
 				console.log("passing sub:", sub);
-				currentWeek.mySub = sub;
-				return res.redirect(`/course/${week.course}/week${week.number}/post`);
+				req.session.currentWeek.mySub = sub;
+				return res.redirect(`/course/${req.params.id}/week${req.params.n}/post`);
 			}
 
 			// console.log('subid', sub._id, sub.id);
@@ -199,14 +195,15 @@ function(req, res, next) {
 			// console.log('reviewed by user', req.user.hasReviewed.indexOf(sub._id) !== -1);
 
 			if(subReviewed || req.user.hasReviewed.indexOf(sub._id) !== -1) {
-				return res.render('nothingtoreview', {reason: 'ALREADY REVIEWED', week: currentWeek});
+				return res.render('nothingtoreview', {reason: 'ALREADY REVIEWED'});
 			}
 
 			// WARNING don't set req.session.reviewingSub here; it should be only applicable to normal /review submissions
-			console.log('going to sub._id:', req.params.subid);
+			console.log('going to sub._id:', sub.id);
 
 			var hashedKey = addSubToHashedData(req.session, sub);
-			res.render('review', { title: 'Review assignment', submission: sub, week: currentWeek, hashedKey: hashedKey});
+			// DONE:20 res.locals.week = currentWeek
+			res.render('review', { title: 'Review assignment', submission: sub, hashedKey: hashedKey});
 		});
 		return;
 	}
@@ -215,6 +212,7 @@ function(req, res, next) {
 
 
 function (req,res, next) {
+	// reviewingSub is available so that user doesn't change reviewing submission on simple reload
 	var reviewingSub = req.session.reviewingSub, currentWeek = req.session.currentWeek;
 	if(reviewingSub && reviewingSub.course == req.params.id && reviewingSub.week.number == req.params.n && reviewingSub.week.obj.toString() === currentWeek.id.toString()) {
 		console.log('STAGE 1.1');
@@ -259,10 +257,10 @@ function (req, res) {
 
 		var hashedKey = addSubToHashedData(req.session, sub);
 
-		res.render('review', { title: 'Review assignment', submission: req.session.reviewingSub, week: req.session.currentWeek, hashedKey: hashedKey});
+		res.render('review', { title: 'Review assignment', submission: req.session.reviewingSub, hashedKey: hashedKey});
 	} else{
 		// DONE:10 create nothingtoreview.jade view
-		res.render('nothingtoreview', {reason: 'NO SUBMISSIONS FOUND', week: req.session.currentWeek});
+		res.render('nothingtoreview', {reason: 'NO SUBMISSIONS FOUND'});
 	}
 });
 

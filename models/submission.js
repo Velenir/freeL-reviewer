@@ -60,7 +60,7 @@ Submission.virtual('calculatedReviewed').get(function(){
 });
 
 Submission.methods.updatedReviewed = function () {
-	console.log('INSIDE updatedReviewed');
+	// console.log('INSIDE updatedReviewed');
 	return this.isReviewed = this.reviews.length >= this.reviewsRequired;
 };
 
