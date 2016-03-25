@@ -167,11 +167,15 @@ form .alert {
 table.course-weeks {
   margin-top: 15px;
 
-  > tbody > tr > td {
-    vertical-align: inherit;
+  > tbody > tr {
+    > td, > th {
+      vertical-align: middle;
+    }
 
     .btn:only-child {
       margin-left: 20px;
+      margin-right: 10px;
+      display: inline;
     }
   }
 }
