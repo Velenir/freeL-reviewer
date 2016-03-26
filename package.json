@@ -1,7 +1,10 @@
 {
   "name": "reviewer",
-  "version": "0.0.0",
+  "version": "0.7.0",
   "private": true,
+  "engines": {
+    "node": "~5.9.1"
+  },
   "scripts": {
     "start": "node ./bin/www",
     "mongod": "gnome-terminal -e 'bash -c \"mongod --dbpath ./data; exec bash\"'"
