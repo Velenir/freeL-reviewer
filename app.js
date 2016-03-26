@@ -27,7 +27,7 @@ app.set('view engine', 'jade');
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
-// NOTE allows to parse values of <input name="scores[#{ind}][#{i}]"> form as objects
+// NOTE { extended: true } allows to parse values of <input name="scores[#{ind}][#{i}]"> form as objects
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -44,8 +44,8 @@ app.use(passport.session());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Pass req.user to every template
 app.use(function (req, res, next) {
-	console.log('Before');
 	res.locals.user = req.user;
 	next();
 });
@@ -66,7 +66,8 @@ passport.serializeUser(Account.serializeUser());
 passport.deserializeUser(Account.deserializeUser());
 
 // mongoose establish connection to db
-mongoose.connect('mongodb://localhost/passport_local_mongoose_express4', function(err){
+var dbURI = process.env.MONGOLAB_URI || 'mongodb://localhost/dev_local';
+mongoose.connect(dbURI, function(err){
 	if(err) console.log('Connection erro:', err);
 });
 // mongoose.connection.once('open', function(){
