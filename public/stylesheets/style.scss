@@ -21,6 +21,7 @@ $footer-padding: 20px;
 
 $body-fonts: 'Lucida Grande', Helvetica, Arial, sans-serif;
 $jumbotron-heading-font: Georgia, serif;
+$about-font: $jumbotron-heading-font;
 
 
 // eliminate space between navbar and main content (e.g. jumbotron)
@@ -188,8 +189,11 @@ table.course-weeks {
   font-size: $bigger-font;
 }
 
+.about-heading, .about-text {
+  font-family: $about-font;
+}
+
 .about-text {
-  font-family: Georgia, serif;
   text-align: justify;
 }
 
