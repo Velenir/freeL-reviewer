@@ -23,7 +23,7 @@ var paths = {
 	images: 'public/images/**/*',
 	sass: 'public/stylesheets/**/*scss',
 	views: 'views/**/*',
-	public: ['public/**/*', '!public/stylesheets/**/*'],
+	public: 'public/*',
 	toCopy: ['bin/**/*', 'package.json']
 };
 
