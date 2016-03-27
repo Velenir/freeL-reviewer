@@ -32,7 +32,7 @@ block main
                         th Your Submission
                   tbody
                     each weekId, weekInd in course.weeks                  
-                      - var week = weeksMap.get(weekId.toString()) || {number: weekInd, countAll: 0, countReviewed: 0, availableForReview: 0, postedSubState: 0}
+                      - var week = weeksMap.get(weekId.toString()) || {number: weekInd+1, countAll: 0, countReviewed: 0, availableForReview: 0, postedSubState: 0}
                       tr
                         th= week.number
                         td= week.countAll

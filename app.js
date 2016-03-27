@@ -5,6 +5,9 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
+var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
+
 //passport requirements
 var mongoose = require('mongoose');
 var passport = require('passport');
@@ -31,12 +34,26 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+var dbURI = process.env.MONGOLAB_URI || 'mongodb://localhost/dev_local';
+// mongoose establish connection to db
+mongoose.connect(dbURI, function(err){
+	if(err) console.log('Connection error:', err);
+});
+
+// use MongoDB to store sessions
+var store = new MongoStore({ mongooseConnection: mongoose.connection });
+
+// Catch errors, useless now -- doesn't emit but throws
+// store.on('error', function(error) {
+// 	console.log('MongoDBStore error', error);
+// });
 
 //use express-session before passport.session()
-app.use(require('express-session')({
-	secret: 'keyboard cat',
+app.use(session({
+	secret: process.env.SESSION_SECRET|| 'keyboard cat',
 	resave: false,
-	saveUninitialized: false
+	saveUninitialized: false,
+	store: store
 }));
 //use passport
 app.use(passport.initialize());
@@ -65,11 +82,7 @@ passport.use(Account.createStrategy()); //better
 passport.serializeUser(Account.serializeUser());
 passport.deserializeUser(Account.deserializeUser());
 
-// mongoose establish connection to db
-var dbURI = process.env.MONGOLAB_URI || 'mongodb://localhost/dev_local';
-mongoose.connect(dbURI, function(err){
-	if(err) console.log('Connection erro:', err);
-});
+
 // mongoose.connection.once('open', function(){
 //	 console.log('Opened Connection');
 //	 Account.find({}, function(err, users){
