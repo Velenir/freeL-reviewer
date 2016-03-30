@@ -38,8 +38,11 @@ data
 #ESLint config file
 .eslintrc.json
 
-#distribution ready uglified, minified
+#distribution ready files
 dist
 
 #CSS compiled by atom in-place
 public/stylesheets/*.css
+
+#dotenv environment file
+.env

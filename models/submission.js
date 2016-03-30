@@ -91,7 +91,7 @@ Submission.statics.updateReviewedStates = function (courseId, weekN) {
 
 		return self.update(condition, {isReviewed: true, reviewsRequired: revN}, {multi: true}).exec();
 	}).catch(function(err){
-		console.log('Error updating ReviewdStates:', err);
+		console.log('Error updating ReviewedStates:', err);
 	});
 };
 
@@ -124,7 +124,7 @@ Submission.statics.addReview = function (subId, author, reviewBody, cb) {
 	// });
 	// console.log("converted scores:", scores);
 	var review = {author: author, scores: reviewBody.scores, comment: reviewBody.comment};
-	console.log('ADDING REVIEW');
+	//console.log('ADDING REVIEW');
 
 	return this.findByIdAndUpdate(subId, {$push: {reviews: review}}, {new: true}, cb);	// NOTE needs {new: true} so that post-hook gets the updated submission
 };
@@ -156,7 +156,7 @@ Submission.post('save', function(doc){
 	// console.log("This value:", this);
 	mongoose.model('Week').update({_id: doc.week.obj}, {$addToSet: {submissions: doc._id}}, function(err, raw){
 		if (err) return console.log('Week Update Error', err);
-		console.log('The raw response from Mongo was ', raw);
+		//console.log('The raw response from Mongo was ', raw);
 	});
 });
 

@@ -10,7 +10,7 @@ var router = express.Router();
 
 // if already logged in don't go to /register or /login
 function alreadyLoggedIn(req, res, next) {
-	console.log('In ALREADy loggedIn');
+	// console.log('In ALREADy loggedIn');
 	if (req.user) {
 		return res.redirect('/');
 	}
@@ -23,7 +23,7 @@ function takeHashedData(session, hashedKey) {
 	var data = session.hashedData[hashedKey];
 	session.hashedData[hashedKey] = undefined;
 
-	console.log('Got', data, 'for hashedKey', hashedKey);
+	// console.log('Got', data, 'for hashedKey', hashedKey);
 
 	return data;
 }
@@ -110,7 +110,7 @@ router.get('/', function(req, res, next) {
 			weeksMap: results[1]
 		});
 	}, function(err) {
-		console.log('Caught error:', err);
+		console.log('Error getting resources:', err);
 		next(err);
 	});
 
@@ -181,7 +181,7 @@ router.post('/login', function(req, res, next) {
 		//	if authentication failed
 		if (!user) {
 			console.log("User null; " + info);
-			console.log(info);
+			// console.log(info);
 			if(redirectedFrom) return res.render('login_register', {loginInfo: info, redirectedFrom: redirectedFrom});
 			else return res.render('login', {loginInfo: info.message});
 			// return res.render(req.body.redirectedFrom ? "login_register" : 'login', {
@@ -232,8 +232,8 @@ router.get('/login_register', function(req, res) {
 router.post('/addsubmission', function(req, res, next) {
 
 	var currentWeek = req.session.currentWeek;
-	console.log('IN /ADDSUBMISSION');
-	console.log('currentWeek:', currentWeek);
+	// console.log('IN /ADDSUBMISSION');
+	// console.log('currentWeek:', currentWeek);
 	if (!currentWeek) {
 		console.log('No currentWeek in user session');
 		return next(new Error('No currentWeek in user session'));
@@ -254,7 +254,7 @@ router.post('/addsubmission', function(req, res, next) {
 		// add new sub._id to user's submissions and save if actually modified
 		req.user.submissions.addToSet(doc._id);
 		if (req.user.isModified('submissions')) {
-			console.log('Added new sub to user');
+			// console.log('Added new sub to user');
 			req.user.save(function(err) {
 				if (err) {
 					console.log('Error adding sub_id to user:', err);
@@ -264,7 +264,7 @@ router.post('/addsubmission', function(req, res, next) {
 				res.redirect('/course/' + currentWeek.course + '/week' + currentWeek.weekN + '/post');
 			});
 		} else {
-			console.log("Updated a user's sub");
+			// console.log("Updated a user's sub");
 			// go to view the submission
 			res.redirect('/course/' + currentWeek.course + '/week' + currentWeek.weekN + '/post');
 		}
@@ -282,7 +282,7 @@ router.post('/addsubmission', function(req, res, next) {
 // On Review form submission
 router.post('/addreview', function(req, res, next) {
 
-	console.log(req.body);
+	// console.log(req.body);
 
 	// DONE:40 get submission based on req.body key from req.session.reviewingSubs object
 	var sub = takeHashedData(req.session, req.body.hk);

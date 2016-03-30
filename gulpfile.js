@@ -14,7 +14,8 @@ var babel = require('gulp-babel');
 var bases = {
 	dist: 'dist/',
 	css: 'dist/public/stylesheets/',
-	images: 'dist/public/images/'
+	images: 'dist/public/images/',
+	toClean: ['dist/*', '!dist/.gitignore', '!dist/app.yaml']
 };
 
 var paths = {
@@ -31,7 +32,7 @@ var paths = {
 // Not all tasks need to use streams
 // A gulpfile is just another node program and you can use any package available on npm
 gulp.task('clean', function() {
-	return del([bases.dist]); // Returns a Promise, which gulp can chain
+	return del(bases.toClean); // Returns a Promise, which gulp can chain
 });
 
 gulp.task('build-scripts', function() {

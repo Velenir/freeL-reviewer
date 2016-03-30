@@ -50,7 +50,7 @@ var store = new MongoStore({ mongooseConnection: mongoose.connection });
 
 //use express-session before passport.session()
 app.use(session({
-	secret: process.env.SESSION_SECRET|| 'keyboard cat',
+	secret: process.env.SESSION_SECRET || 'keyboard cat',
 	resave: false,
 	saveUninitialized: false,
 	store: store

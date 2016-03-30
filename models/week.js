@@ -27,7 +27,7 @@ Week.methods.updateSubRevs = function (cb) {
 	if(!cb) {
 		cb = function(err, raw){
 			if(err) console.log('Error updating reviewsRequired for Submissions in Week', this._id);
-			console.log('raw response:', raw);
+			//console.log('raw response:', raw);
 		};
 	}
 	this.revModified = false;

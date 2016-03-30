@@ -9,16 +9,16 @@ var hash = require('object-hash');
 
 // if not logged in go to '/login_register'
 function requireAuthorization(req, res, next) {
-	console.log("IN requireAuthorization");
+	//console.log("IN requireAuthorization");
 	if(req.user){
 		return next();
 	}
 
-	console.log("REDIRECTING");
+	//console.log("REDIRECTING");
 	// remember from where was redirected
 	req.session.redirectedFrom = req.originalUrl;
-	console.log("ORIGINAL URL", req.originalUrl);
-	console.log("URL", req.url);
+	//console.log("ORIGINAL URL", req.originalUrl);
+	//console.log("URL", req.url);
 	res.redirect('/login_register');
 }
 
@@ -70,18 +70,18 @@ router.get('/:id(\\d+)/week:n(\\d+)', function(req, res, next) {
 });
 
 function populateCurrentWeek(req, res, next) {
-	console.log('req.params:', req.params);
+	//console.log('req.params:', req.params);
 	var currentWeek = req.session.currentWeek;
 	// if currentWeek already filled with id and is the same skip reassigning
 	// provided we can rely on weeks collection having unique {course, number} fileds
 	if(currentWeekIsSame(currentWeek, req.params)){
 		res.locals.week = currentWeek;
-		console.log('currentWeek checks, going next');
+		//console.log('currentWeek checks, going next');
 
 		return next();
 	}
 
-	console.log('currentWeek wrong, filling now');
+	//console.log('currentWeek wrong, filling now');
 
 	var condition = {course: req.params.id, number: req.params.n};
 
@@ -92,13 +92,13 @@ function populateCurrentWeek(req, res, next) {
 		}
 
 		if(!week) {
-			console.log('No week found');
+			//console.log('No week found');
 			return res.status(406).send('No such week');
 		}
 
 		// inject week data into req.session to make use of in post form call
 		res.locals.week = req.session.currentWeek = constructCurrentWeek(week);
-		console.log('currentWeek filled, going next');
+		//console.log('currentWeek filled, going next');
 		next();
 	});
 }
@@ -122,21 +122,21 @@ router.get('/:id(\\d+)/week:n(\\d+)/post', function(req, res, next) {
 		return next();
 	}
 
-	console.log('STAGE 1.5');
+	// console.log('STAGE 1.5');
 
 	Submission.findOne({course: +req.params.id, 'week.number': +req.params.n, 'user.userId': req.user._id}, function (err, sub) {
 		if(err) return next(err);
 
 		req.submission = sub;
-		if(sub) console.log('found sub for user', req.user._id);
-		else console.log('no sub found for user', req.user._id, 'in week', req.params.n, 'in course', req.params.id);
+		// if(sub) console.log('found sub for user', req.user._id);
+		// else console.log('no sub found for user', req.user._id, 'in week', req.params.n, 'in course', req.params.id);
 		next();
 	});
 
 }, function (req, res) {
-	console.log('STAGE 2');
-	console.log('rendering with sub:', req.submission);
-	console.log('and currentWeek:', req.session.currentWeek);
+	// console.log('STAGE 2');
+	// console.log('rendering with sub:', req.submission);
+	// console.log('and currentWeek:', req.session.currentWeek);
 	// console.log('has updatedReviewed method:', req.submission.updatedReviewed);
 	// console.log('calculatedReviewed:', req.submission.calculatedReviewed);
 	var sub = req.submission;
@@ -152,7 +152,7 @@ router.get('/:id(\\d+)/week:n(\\d+)/post', function(req, res, next) {
 router.get('/:id(\\d+)/week:n(\\d+)/review', function(req, res, next) {
 	// Check that the user has already made a submission for this week,
 	// otherwise don't allow to see others' submissions
-	console.log('STAGE PRE_REVIEW');
+	// console.log('STAGE PRE_REVIEW');
 	Submission.findOne({course: +req.params.id, 'week.number': +req.params.n, 'user.userId': req.user._id}, '_id', function (err, sub) {
 		if(err) return next(err);
 
@@ -168,7 +168,7 @@ router.get('/:id(\\d+)/week:n(\\d+)/review', function(req, res, next) {
 
 function(req, res, next) {
 	if(req.query.sub){
-		console.log('STAGE 0');
+		// console.log('STAGE 0');
 
 		// submission with given _id must belong to a proper week and course from the url
 		Submission.findOne({_id: req.query.sub, course: +req.params.id, 'week.number': +req.params.n}, function (err, sub) {
@@ -185,7 +185,7 @@ function(req, res, next) {
 			// if same user, don't let him review his assignment
 			if(sub.user.userId.toString() === req.user._id.toString()) {
 				// console.log('Redirecting to /post', ':: has updatedReviewed method:', sub.updatedReviewed);
-				console.log("passing sub:", sub);
+				// console.log("passing sub:", sub);
 				req.session.currentWeek.mySub = sub;
 				return res.redirect(`/course/${req.params.id}/week${req.params.n}/post`);
 			}
@@ -199,7 +199,7 @@ function(req, res, next) {
 			}
 
 			// WARNING don't set req.session.reviewingSub here; it should be only applicable to normal /review submissions
-			console.log('going to sub._id:', sub.id);
+			// console.log('going to sub._id:', sub.id);
 
 			var hashedKey = addSubToHashedData(req.session, sub);
 			// DONE:20 res.locals.week = currentWeek
@@ -215,7 +215,7 @@ function (req,res, next) {
 	// reviewingSub is available so that user doesn't change reviewing submission on simple reload
 	var reviewingSub = req.session.reviewingSub, currentWeek = req.session.currentWeek;
 	if(reviewingSub && reviewingSub.course == req.params.id && reviewingSub.week.number == req.params.n && reviewingSub.week.obj.toString() === currentWeek.id.toString()) {
-		console.log('STAGE 1.1');
+		// console.log('STAGE 1.1');
 
 		return next();
 	} else {
@@ -225,8 +225,8 @@ function (req,res, next) {
 			if(req.user.hasReviewed) subsNotForReview = subsNotForReview.concat(req.user.hasReviewed);
 		}
 
-		console.log('STAGE 1.2');
-		console.log('notForReview', subsNotForReview);
+		// console.log('STAGE 1.2');
+		// console.log('notForReview', subsNotForReview);
 
 		Submission.aggregate([
 			{"$match" : {"course": +req.params.id, 'week.number': +req.params.n, "isReviewed": false, "_id": {"$nin": subsNotForReview}}},
@@ -236,12 +236,12 @@ function (req,res, next) {
 			{"$sample" : {"size" : 1}}],
 			function (err, subs) {
 				if(err) {
-					console.log("Error aggregating submissions for review");
+					console.log("Error aggregating submissions for review", err);
 					next(err);
 				}
 
 				var sub = subs[0];
-				console.log("Aggregated sub:", sub);
+				// console.log("Aggregated sub:", sub);
 
 				req.session.reviewingSub = sub;
 				next();
@@ -253,7 +253,7 @@ function (req, res) {
 	var sub = req.session.reviewingSub;
 
 	if(sub) {
-		console.log('STAGE 2');
+		// console.log('STAGE 2');
 
 		var hashedKey = addSubToHashedData(req.session, sub);
 
